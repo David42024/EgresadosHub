@@ -1,0 +1,9 @@
+export { RoleSelectionStep } from './RoleSelectionStep';
+export { CredentialsStep } from './CredentialsStep';
+export { DatosAcademicosStep } from './DatosAcademicosStep';
+export { ContactoStep } from './ContactoStep';
+export { PerfilProfesionalStep } from './PerfilProfesionalStep';
+export { HabilidadesStep } from './HabilidadesStep';
+export { EmpresaDatosStep } from './EmpresaDatosStep';
+export { EmpresaPresentacionStep } from './EmpresaPresentacionStep';
+export { BienvenidaStep } from './BienvenidaStep';

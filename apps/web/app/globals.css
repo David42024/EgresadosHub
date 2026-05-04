@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primario — azul institucional */
+    --primary-50:  #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-900: #1e3a8a;
+
+    /* Superficie */
+    --bg-base:     #f8fafc;
+    --bg-surface:  #ffffff;
+    --bg-elevated: #f1f5f9;
+
+    /* Bordes */
+    --border:      #e2e8f0;
+    --border-hover: #cbd5e1;
+    --input:       #e2e8f0;
+
+    /* Texto */
+    --text-primary:   #0f172a;
+    --text-secondary: #475569;
+    --text-muted:     #94a3b8;
+
+    /* Semánticos */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error:   #ef4444;
+    --info:    #3b82f6;
+  }
+
+  .dark {
+    --bg-base:     #0a0f1e;
+    --bg-surface:  #111827;
+    --bg-elevated: #1a2235;
+    --border:      #1e2d45;
+    --border-hover: #2d3f5a;
+    --input:       #1e2d45;
+    --text-primary:   #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted:     #475569;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/20;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg;
+  }
+
+  .page-container {
+    @apply mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .range-slider { position: relative; height: 40px; }
+  .range-slider input[type=range] {
+    position: absolute;
+    width: 100%;
+    pointer-events: none;
+    appearance: none;
+    background: transparent;
+  }
+  .range-slider input[type=range]::-webkit-slider-thumb {
+    pointer-events: all;
+    cursor: pointer;
+  }
+}

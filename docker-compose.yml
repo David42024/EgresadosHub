@@ -1,0 +1,108 @@
+version: '3.9'
+
+services:
+  # ─── Base de datos ───────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: egresados_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: egresados_db
+      POSTGRES_USER: egresados_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-egresados_secret}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./apps/api/src/database/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U egresados_user -d egresados_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (caché + queues) ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: egresados_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_secret}
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend NestJS ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development}
+    container_name: egresados_api
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://egresados_user:${POSTGRES_PASSWORD:-egresados_secret}@postgres:5432/egresados_db
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./apps/api:/app
+      - /app/node_modules
+      - pdf_storage:/app/storage/pdfs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run start:dev
+
+  # ─── Frontend Next.js (desarrollo) ─────────────────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: development
+    container_name: egresados_web
+    restart: unless-stopped
+    env_file:
+      - ./apps/web/.env.local
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      API_INTERNAL_URL: http://api:3001
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+
+  # ─── Adminer (UI para PostgreSQL en desarrollo) ──────────────────────
+  adminer:
+    image: adminer:4
+    container_name: egresados_adminer
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+  redis_data:
+  pdf_storage:
+
+networks:
+  default:
+    name: egresados_network

@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────
+# Render.com Blueprint Configuration
+# Para deployar en Render: render blueprint apply render.yaml
+# ─────────────────────────────────────────────────────────────────
+
+services:
+  # ─── Base de datos PostgreSQL ─────────────────────────────────
+  - type: postgres
+    name: egresados-postgres
+    plan: starter
+    ipAllowList: []
+    postgresMajorVersion: "16"
+
+  # ─── Redis para caché y colas ─────────────────────────────────
+  - type: redis
+    name: egresados-redis
+    plan: starter
+    ipAllowList: []
+
+  # ─── Backend API (NestJS) ───────────────────────────────────────
+  - type: web
+    name: egresados-api
+    plan: starter
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    env: docker
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: egresados-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: egresados-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: PDF_STORAGE_PATH
+        value: ./storage/pdfs
+      - key: PDF_BASE_URL
+        value: https://egresados-api.onrender.com/storage/pdfs
+    disk:
+      name: pdf-storage
+      mountPath: /app/apps/api/storage/pdfs
+      sizeGB: 1
+
+  # ─── Frontend Web (Next.js) ─────────────────────────────────────
+  - type: web
+    name: egresados-web
+    plan: starter
+    runtime: docker
+    dockerfilePath: ./apps/web/Dockerfile
+    dockerContext: .
+    env: docker
+    buildFilter:
+      paths:
+        - apps/web/**
+        - packages/**
+        - package.json
+        - pnpm-lock.yaml
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://egresados-api.onrender.com
+      - key: API_INTERNAL_URL
+        value: https://egresados-api.onrender.com
+
+# ─── Configuración adicional ────────────────────────────────────
+# Comandos a ejecutar después del deploy:
+# 1. Migraciones: render run egresados-api -- pnpm db:migrate
+# 2. Seeds: render run egresados-api -- pnpm db:seed

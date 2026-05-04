@@ -1,0 +1,73 @@
+{
+  "name": "egresados-platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "lint:strict": "eslint . --ext .ts,.tsx --max-warnings 500",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
+    "validate-all": "pnpm run lint:strict && pnpm run type-check && pnpm run test:coverage",
+    "test:e2e": "turbo test:e2e",
+    "db:migrate": "turbo db:migrate",
+    "db:seed": "turbo db:seed",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "prepare": "husky install"
+  },
+  "pnpm": {
+    "overrides": {
+      "@trpc/server": "11.0.0",
+      "@trpc/client": "11.0.0",
+      "@trpc/react-query": "11.0.0"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react": "19",
+        "react-dom": "19",
+        "eslint": "10"
+      }
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.1",
+    "@typescript-eslint/parser": "^8.59.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "depcheck": "^1.4.7",
+    "eslint": "^10.3.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-unicorn": "^64.0.0",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "knip": "^6.10.0",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.3.0",
+    "stryker-cli": "^1.1.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.59.1",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=20.14.0",
+    "pnpm": ">=9.15.4"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "dependencies": {
+    "jose": "^6.2.3"
+  }
+}

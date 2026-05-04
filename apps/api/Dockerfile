@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────
+# API (NestJS) Dockerfile - Production & Development
+# ─────────────────────────────────────────────────────────────────
+
+# ─── Base Stage ─────────────────────────────────────────────────
+FROM node:20-alpine AS base
+RUN npm install -g pnpm@9
+WORKDIR /app
+
+# ─── Dependencies Stage ─────────────────────────────────────────
+FROM base AS dependencies
+
+# Copy workspace files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY packages ./packages
+COPY apps/api/package.json ./apps/api/
+
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
+
+# ─── Builder Stage ────────────────────────────────────────────────
+FROM dependencies AS builder
+
+# Copy source code
+COPY apps/api ./apps/api
+COPY packages ./packages
+COPY turbo.json ./
+
+# Build packages first
+RUN pnpm --filter "@repo/trpc-contract" build
+
+# Build the API
+RUN pnpm --filter "@repo/api" build
+
+# ─── Production Stage ───────────────────────────────────────────
+FROM node:20-alpine AS production
+
+# Install Chrome for Puppeteer (PDF generation)
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+RUN npm install -g pnpm@9
+WORKDIR /app
+
+# Copy package files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY apps/api/package.json ./apps/api/
+COPY packages ./packages
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Copy built files
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/packages ./packages
+
+# Copy storage directory for PDFs
+RUN mkdir -p /app/apps/api/storage/pdfs
+
+WORKDIR /app/apps/api
+
+EXPOSE 3001
+
+CMD ["node", "dist/main"]
+
+# ─── Development Stage ──────────────────────────────────────────
+FROM dependencies AS development
+
+# Copy source code for hot reload
+COPY apps/api ./apps/api
+COPY packages ./packages
+COPY turbo.json ./
+
+WORKDIR /app/apps/api
+
+EXPOSE 3001
+
+CMD ["pnpm", "start:dev"]
