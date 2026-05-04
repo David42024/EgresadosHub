@@ -27,16 +27,16 @@ services:
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs  # Cambiar a basic-xs para producción
-    http_port: 3001
+    http_port: 8080
     health_check:
       http_path: /health
       timeout_seconds: 10
-      port: 3001
+      port: 8080
     envs:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: "3001"
+        value: "8080"
       - key: DATABASE_URL
         value: ${egresados-db.DATABASE_URL}
       - key: JWT_SECRET
@@ -44,9 +44,9 @@ services:
       - key: JWT_REFRESH_SECRET
         generate_value: true
       - key: API_INTERNAL_URL
-        value: http://egresados-api:3001
+        value: http://egresados-api:8080
       - key: CORS_ORIGIN
-        value: ${APP_URL}  # URL del frontend proporcionada por DigitalOcean
+        value: ${egresados-web.PUBLIC_URL}  # URL pública del frontend
       - key: CLOUDINARY_CLOUD_NAME
         value: ""
         type: SECRET
@@ -83,7 +83,7 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: ${egresados-api.PUBLIC_URL}  # URL pública del API
       - key: API_INTERNAL_URL
-        value: http://egresados-api:3001  # Comunicación interna entre servicios
+        value: http://egresados-api:8080  # Comunicación interna entre servicios
     alerts:
       - rule: DEPLOYMENT_FAILED
         disabled: false

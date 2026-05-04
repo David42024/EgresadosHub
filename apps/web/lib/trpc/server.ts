@@ -1,12 +1,14 @@
 // apps/web/lib/trpc/server.ts
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import { cookies } from 'next/headers';
-import type { TAppRouter } from './router.types';
 
-export async function createServerTrpcClient() {
+// Cliente tRPC sin tipado estricto para evitar dependencia circular API ↔ Web
+// FIXME: Implementar generación de tipos independiente
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function createServerTrpcClient(): Promise<any> {
   const cookieStore = await cookies();
 
-  return createTRPCProxyClient<TAppRouter>({
+  return createTRPCProxyClient({
     links: [
       httpBatchLink({
         url: `${process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3001'}/api/v1/trpc`,
