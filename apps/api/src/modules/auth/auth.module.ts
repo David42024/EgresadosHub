@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // auth.module.ts
 // ═══════════════════════════════════════════════════════════════
-import { Module }          from '@nestjs/common';
+import { Module, Logger }          from '@nestjs/common';
 import { JwtModule }       from '@nestjs/jwt';
 import { PassportModule }  from '@nestjs/passport';
 import { TypeOrmModule }   from '@nestjs/typeorm';
@@ -14,6 +14,24 @@ import { GoogleStrategy }  from './strategies/google.strategy';
 import { AuthRouter }      from './auth.router';
 import { EgresadosModule } from '../egresados/egresados.module';
 import { EmpresasModule }  from '../empresas/empresas.module';
+
+// Factory para GoogleStrategy - solo se crea si hay credenciales configuradas
+const googleStrategyProvider = {
+  provide: GoogleStrategy,
+  useFactory: (config: ConfigService) => {
+    const clientID = config.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = config.get<string>('GOOGLE_CLIENT_SECRET');
+    const callbackURL = config.get<string>('GOOGLE_CALLBACK_URL');
+
+    if (!clientID || !clientSecret || !callbackURL) {
+      Logger.warn('Google OAuth no configurado - se omite GoogleStrategy', 'AuthModule');
+      return null;
+    }
+
+    return new GoogleStrategy(config);
+  },
+  inject: [ConfigService],
+};
 
 @Module({
   imports: [
@@ -30,7 +48,7 @@ import { EmpresasModule }  from '../empresas/empresas.module';
     }),
   ],
   controllers: [AuthController],
-  providers:   [AuthService, JwtStrategy, GoogleStrategy, AuthRouter],
+  providers:   [AuthService, JwtStrategy, googleStrategyProvider, AuthRouter],
   exports:     [AuthService, JwtModule, AuthRouter],
 })
 export class AuthModule {}
