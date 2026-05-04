@@ -83,10 +83,6 @@ import { join } from 'path';
       rootPath: join(process.cwd(), 'public'),
       serveRoot: '/',
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'storage', 'pdfs'),
-      serveRoot: '/storage/pdfs',
-    }),
   ],
 })
 export class AppModule { }

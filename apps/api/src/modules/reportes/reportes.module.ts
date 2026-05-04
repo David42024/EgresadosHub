@@ -5,6 +5,7 @@ import { ReporteJob } from './entities/reporte-job.entity';
 import { ReportesService } from './reportes.service';
 import { ReportesRouter } from './reportes.router';
 import { ReportesProcessor } from './reportes.queue';
+import { ReportesFilesController } from './reportes-files.controller';
 import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { AnalyticsModule } from '../analytics/analytics.module';
     BullModule.registerQueue({ name: 'reportes' }),
     AnalyticsModule,
   ],
+  controllers: [ReportesFilesController],
   providers: [ReportesService, ReportesRouter, ReportesProcessor],
   exports:   [ReportesService, ReportesRouter, ReportesProcessor],
 })

@@ -48,14 +48,14 @@ services:
       - key: CORS_ORIGIN
         value: ${egresados-web.PUBLIC_URL}  # URL pública del frontend
       - key: CLOUDINARY_CLOUD_NAME
-        value: ""
         type: SECRET
+        scope: RUN_TIME
       - key: CLOUDINARY_API_KEY
-        value: ""
         type: SECRET
+        scope: RUN_TIME
       - key: CLOUDINARY_API_SECRET
-        value: ""
         type: SECRET
+        scope: RUN_TIME
       # ─── OAuth Google (configure in Dashboard) ─────────────────────────────
       - key: GOOGLE_CLIENT_ID
         type: SECRET
