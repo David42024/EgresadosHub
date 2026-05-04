@@ -15,8 +15,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages ./packages
 COPY apps/api/package.json ./apps/api/
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (ignore scripts to skip husky)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ─── Builder Stage ────────────────────────────────────────────────
 FROM dependencies AS builder
@@ -54,8 +54,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages ./packages
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies only (ignore scripts to skip husky)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built files
 COPY --from=builder /app/apps/api/dist ./apps/api/dist

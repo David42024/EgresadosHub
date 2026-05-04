@@ -15,8 +15,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages ./packages
 COPY apps/web/package.json ./apps/web/
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install all dependencies (ignore scripts to skip husky)
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ─── Builder Stage ────────────────────────────────────────────────
 FROM dependencies AS builder
@@ -44,8 +44,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages ./packages
 
-# Install production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install production dependencies (ignore scripts to skip husky)
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built application
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
