@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Link from 'next/link';
 import { createServerTrpcClient } from '@/lib/trpc/server';
 import type { RouterOutputs } from '@/lib/trpc/router.types';

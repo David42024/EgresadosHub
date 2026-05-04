@@ -103,13 +103,13 @@ services:
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:
   rules:
-    # API (NestJS) - Sirve las API en /api (más específico, va primero)
+    # API (NestJS) - Solo /api/v1 va al backend
     - component:
         name: egresados-api
       match:
         path:
-          prefix: /api
-    # Web (Next.js) - Sirve el frontend en la raíz
+          prefix: /api/v1
+    # Web (Next.js) - Todo lo demás incluyendo /api/trpc va al frontend
     - component:
         name: egresados-web
       match:
