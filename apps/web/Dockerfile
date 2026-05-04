@@ -26,6 +26,9 @@ COPY apps/web ./apps/web
 COPY packages ./packages
 COPY turbo.json ./
 
+# Create public directory if it doesn't exist
+RUN mkdir -p /app/apps/web/public
+
 # Build packages first
 RUN pnpm --filter "@repo/trpc-contract" build
 
@@ -49,9 +52,11 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built application
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/public ./apps/web/public
 COPY --from=builder /app/apps/web/next.config.* ./apps/web/
 COPY --from=builder /app/packages ./packages
+# Copy public directory if it exists and has content
+RUN mkdir -p ./apps/web/public && \
+    (test -d /app/apps/web/public && cp -r /app/apps/web/public/* ./apps/web/public/ 2>/dev/null || true)
 
 WORKDIR /app/apps/web
 
