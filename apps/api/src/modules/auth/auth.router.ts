@@ -28,8 +28,9 @@ export class AuthRouter {
             }
             
             return result;
-          } catch (error: any) {
-            if (error.message?.includes('Credenciales incorrectas')) {
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : '';
+            if (message.includes('Credenciales incorrectas')) {
               throw new TRPCError({ 
                 code: 'UNAUTHORIZED', 
                 message: 'Credenciales incorrectas' 

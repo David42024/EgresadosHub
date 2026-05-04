@@ -36,13 +36,14 @@ export class EmpresasService {
       qb.andWhere('e.verificada = :verificada', { verificada: filter.verificada });
     }
 
-    let rows: Empresa[] = [];
+    let rows: Empresa[];
+    let total: number;
     try {
-      [rows] = await qb
+      [rows, total] = await qb
         .offset(skip)
         .limit(limit)
         .getManyAndCount();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(`!!! [SQL ERROR] EmpresasService.findAll:`, e);
       throw e;
     }
@@ -89,6 +90,7 @@ export class EmpresasService {
       totalOfertas: ofertaCounts[r.id] || 0
     }));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return { data: data as any, nextCursor: null, total };
   }
 
@@ -98,7 +100,7 @@ export class EmpresasService {
     return e;
   }
 
-  async findByUserId(userId: string): Promise<any | null> {
+  async findByUserId(userId: string): Promise<(Empresa & { _count: { ofertas: number } }) | null> {
     const empresa = await this.repo.findOne({ where: { userId }, relations: ['user'] });
     if (!empresa) return null;
 
@@ -149,6 +151,7 @@ export class EmpresasService {
     
     return {
       ...empresa,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ofertas: ofertas.map((o: any) => ({
         id: o.id,
         titulo: o.titulo,

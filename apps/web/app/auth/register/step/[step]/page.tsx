@@ -638,7 +638,7 @@ function HabilidadesStep() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    import('../../../../../lib/api').then(({ habilidadesApi }) => {
+    void import('../../../../../lib/api').then(({ habilidadesApi }) => {
       habilidadesApi.list().then(setHabilidades).catch(() => {});
     });
   }, []);

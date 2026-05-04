@@ -112,7 +112,7 @@ export default function LoginPage() {
                 onClick={() => {
                   (document.querySelector('input[name="email"]') as HTMLInputElement).value = email;
                   (document.querySelector('input[name="password"]') as HTMLInputElement).value = password;
-                  onSubmit({ email, password });
+                  void onSubmit({ email, password });
                 }}
                 className="text-xs py-2 px-3 rounded-xl font-semibold border border-border hover:bg-bg-subtle transition-all text-text-secondary"
               >

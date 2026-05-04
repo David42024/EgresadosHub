@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { CreateEmpresaProfileSchema, EmpresaFilterSchema } from '@repo/trpc-contract';
+import { CreateEmpresaProfileSchema } from '@repo/trpc-contract';
 import { router, protectedProc, adminProc, empresaProc, publicProc } from '../../trpc/trpc.service';
 import { EmpresasService } from './empresas.service';
 
@@ -21,6 +21,7 @@ export class EmpresasRouter {
         }))
         .query(({ input }) => {
           console.error(`\n!!! [ROUTER DEBUG] Empresas.list input:`, input);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return this.service.findAll(input as any);
         }),
 

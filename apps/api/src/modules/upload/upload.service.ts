@@ -15,6 +15,7 @@ export class UploadService {
   }
 
   async uploadImage(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     file: any,
     folder: string,
     publicId?: string,
@@ -38,6 +39,7 @@ export class UploadService {
   }
 
   async uploadFile(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     file: any,
     folder: string,
     publicId: string,
@@ -94,7 +96,7 @@ export class UploadService {
       });
 
       return { url: result.secure_url, publicId: result.public_id };
-    } catch (error) {
+    } catch {
       throw new BadRequestException('No se pudo procesar la URL de la imagen');
     }
   }

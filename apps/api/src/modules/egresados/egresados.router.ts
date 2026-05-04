@@ -6,7 +6,6 @@ import {
 } from '../../trpc/trpc.service';
 import { EgresadosService } from './egresados.service';
 import {
-  EgresadoFilterSchema,
   CreateEgresadoProfileSchema,
   UpdateEgresadoProfileSchema,
   AnalyticsFilterSchema,
@@ -28,6 +27,7 @@ export class EgresadosRouter {
         }))
         .query(({ input }) => {
           console.error(`\n!!! [ROUTER DEBUG] Egresados.list input:`, input);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return this.service.findAll(input as any);
         }),
 

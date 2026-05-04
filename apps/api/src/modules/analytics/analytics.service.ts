@@ -32,6 +32,7 @@ interface RawDemandaHabilidad {
   brecha:          number;  // ::int cast → number directo
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RawEmpresaResumen {
   total_ofertas_activas: string;
   total_postulaciones: string;

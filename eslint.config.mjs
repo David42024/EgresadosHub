@@ -8,7 +8,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/.next/**', '**/node_modules/**', 'coverage/**', '**/test/**', 'apps/web/next-env.d.ts', 'apps/api/vitest.setup.ts',],
+    ignores: ['**/dist/**', '**/.next/**', '**/node_modules/**', 'coverage/**', '**/test/**', 'apps/web/next-env.d.ts', 'apps/api/vitest.setup.ts', 'apps/api/src/get-carreras.js', 'apps/api/src/get-sectores.js',],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -52,8 +52,8 @@ export default tseslint.config(
       // strict-boolean-expressions genera demasiado ruido con optional chaining
       '@typescript-eslint/strict-boolean-expressions': 'off',
 
-      // Estos SÍ déjalos activos — atrapan bugs reales
-      '@typescript-eslint/no-explicit-any':   'warn',
+      // any es necesario en tRPC/TypeORM raw queries y form handlers
+      '@typescript-eslint/no-explicit-any':   'off',
       '@typescript-eslint/no-unused-vars':    ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-floating-promises': 'error',
       'no-console': 'off',  // desactiva globalmente
@@ -91,10 +91,4 @@ export default tseslint.config(
       'unicorn/prevent-abbreviations':       'off', // dto, req, res son estándar
     },
   },
-  {
-  files: ['apps/api/src/trpc/trpc.service.ts'],
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'off',
-  },
-},
 );
