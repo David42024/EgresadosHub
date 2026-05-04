@@ -52,7 +52,7 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # Copy built application
 COPY --from=builder /app/apps/web/.next ./apps/web/.next
-COPY --from=builder /app/apps/web/next.config.* ./apps/web/
+COPY --from=builder /app/apps/web/next.config.mjs ./apps/web/
 COPY --from=builder /app/packages ./packages
 # Copy public directory if it exists and has content
 RUN mkdir -p ./apps/web/public && \
