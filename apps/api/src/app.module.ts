@@ -83,6 +83,14 @@ import { join } from 'path';
       rootPath: join(process.cwd(), 'public'),
       serveRoot: '/',
     }),
+    // Servir PDFs generados desde /storage/pdfs (excluido del prefijo api/v1)
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'storage', 'pdfs'),
+      serveRoot: '/storage/pdfs',
+      serveStaticOptions: {
+        fallthrough: false, // Devolver 404 si no existe
+      },
+    }),
   ],
 })
 export class AppModule { }

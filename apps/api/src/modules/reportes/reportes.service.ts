@@ -38,6 +38,13 @@ export class ReportesService {
     private readonly analyticsService: AnalyticsService,
   ) {}
 
+  onModuleInit() {
+    const pdfBaseUrl = this.config.get<string>('PDF_BASE_URL', 'no-configurado');
+    const pdfStoragePath = this.config.get<string>('PDF_STORAGE_PATH', 'no-configurado');
+    this.logger.log(`PDF_BASE_URL configurado: ${pdfBaseUrl}`);
+    this.logger.log(`PDF_STORAGE_PATH configurado: ${pdfStoragePath}`);
+  }
+
   async generarReporte(dto: { tipo: TipoReporte; filtros?: unknown; asincrono?: boolean }, userId: string): Promise<{ jobId: string; url?: string }> {
     const job = await this.jobRepo.save(
       this.jobRepo.create({

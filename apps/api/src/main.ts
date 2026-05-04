@@ -54,9 +54,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // ─── Prefijo global de rutas REST ────────────────────────────────────────────
-  app.setGlobalPrefix(config.get<string>('API_PREFIX', 'api/v1'), {
-    exclude: ['/storage/(.*)'], // Excluir rutas de archivos estáticos
-  });
+  app.setGlobalPrefix(config.get<string>('API_PREFIX', 'api/v1'));
 
   await app.listen(port);
   logger.log(`🚀 API corriendo en: http://localhost:${port}`);
