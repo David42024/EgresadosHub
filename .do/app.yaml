@@ -97,6 +97,8 @@ services:
         value: ${egresados-api.PUBLIC_URL}  # URL pública del API
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080  # Comunicación interna entre servicios
+      - key: API_PREFIX
+        value: api/v1  # Prefijo de la API
 
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:

@@ -7,11 +7,14 @@ import { cookies } from 'next/headers';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createServerTrpcClient(): Promise<any> {
   const cookieStore = await cookies();
+  const apiUrl = `${process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3001'}/api/v1/trpc`;
+  // eslint-disable-next-line no-console
+  console.log('[Server tRPC] Connecting to:', apiUrl);
 
   return createTRPCProxyClient({
     links: [
       httpBatchLink({
-        url: `${process.env['API_INTERNAL_URL'] ?? 'http://127.0.0.1:3001'}/api/v1/trpc`,
+        url: apiUrl,
         headers() {
           const token = cookieStore.get('access_token')?.value;
           return token !== undefined

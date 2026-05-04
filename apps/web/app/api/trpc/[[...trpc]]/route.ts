@@ -21,6 +21,9 @@ async function handleRequest(req: NextRequest) {
   const searchParams = url.search;
 
   const targetUrl = `${apiHost}/${apiPrefix}/trpc${path}${searchParams}`;
+  
+  // eslint-disable-next-line no-console
+  console.log(`[TRPC Proxy] ${req.method} ${url.pathname} → ${targetUrl}`);
 
   const headers = new Headers(req.headers);
   // Importante: No reenviar el host original para evitar problemas de SSL/CORS en el backend

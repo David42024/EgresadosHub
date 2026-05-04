@@ -30,8 +30,10 @@ export default async function HomePage() {
         totalEmpresas:       Number(kpis.totalEmpresas ?? 0),
       };
     }
-  } catch {
-    // Fallback silencioso
+  } catch (err) {
+    // Log error for debugging
+    // eslint-disable-next-line no-console
+    console.error('[HomePage] Error fetching stats:', err);
   }
 
   return (
