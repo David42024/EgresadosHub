@@ -123,6 +123,36 @@ Ve a la app en el Dashboard → **Settings** → **App-Level Environment Variabl
 | `EMAIL_HOST` | API | Servidor SMTP |
 | `EMAIL_USER` | API | Email para notificaciones |
 | `EMAIL_PASSWORD` | API | Contraseña del email |
+| `GOOGLE_CLIENT_ID` | API | Client ID de Google OAuth |
+| `GOOGLE_CLIENT_SECRET` | API | Client Secret de Google OAuth |
+| `GITHUB_CLIENT_ID` | API | Client ID de GitHub OAuth |
+| `GITHUB_CLIENT_SECRET` | API | Client Secret de GitHub OAuth |
+
+### Configurar OAuth (Opcional pero recomendado)
+
+#### Google OAuth
+
+1. Ve a [Google Cloud Console](https://console.cloud.google.com/)
+2. Crea un nuevo proyecto o selecciona uno existente
+3. Ve a **APIs & Services** → **Credentials**
+4. Haz clic en **Create Credentials** → **OAuth client ID**
+5. Configura la pantalla de consentimiento (tipo: External)
+6. Selecciona **Web application**
+7. En **Authorized redirect URIs**, agrega:
+   ```
+   https://<tu-api-url>/api/auth/google/callback
+   ```
+8. Copia el **Client ID** y **Client Secret** a las variables de entorno en DigitalOcean
+
+#### GitHub OAuth
+
+1. Ve a **Settings** → **Developer settings** → **OAuth Apps** en GitHub
+2. Haz clic en **New OAuth App**
+3. Completa:
+   - **Application name**: EgresadosHub
+   - **Homepage URL**: `https://<tu-web-url>`
+   - **Authorization callback URL**: `https://<tu-api-url>/api/auth/github/callback`
+4. Copia el **Client ID** y **Client Secret** a las variables de entorno en DigitalOcean
 
 ---
 

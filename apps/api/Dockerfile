@@ -66,7 +66,8 @@ RUN mkdir -p /app/apps/api/storage/pdfs
 
 WORKDIR /app/apps/api
 
-EXPOSE 3001
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["node", "dist/main"]
 
@@ -80,6 +81,7 @@ COPY turbo.json ./
 
 WORKDIR /app/apps/api
 
-EXPOSE 3001
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["pnpm", "start:dev"]
