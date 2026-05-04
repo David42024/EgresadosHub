@@ -3,14 +3,14 @@
 # Para deployar en Render: render blueprint apply render.yaml
 # ─────────────────────────────────────────────────────────────────
 
-services:
+databases:
   # ─── Base de datos PostgreSQL ─────────────────────────────────
-  - type: postgres
-    name: egresados-postgres
+  - name: egresados-postgres
     plan: starter
     ipAllowList: []
     postgresMajorVersion: "16"
 
+services:
   # ─── Redis para caché y colas ─────────────────────────────────
   - type: redis
     name: egresados-redis

@@ -1,9 +1,5 @@
 /**
  * Re-exportación del tipo TAppRouter para consumo desde el frontend.
- * Importa desde archivo de tipos limpio que no incluye métodos del servicio NestJS.
+ * Usa @repo/trpc-contract que exporta los tipos compartidos entre API y Web.
  */
-import type { TAppRouter as RealAppRouter, RouterInputs as RealRouterInputs, RouterOutputs as RealRouterOutputs } from '../../../../api/src/trpc/app-router.types';
-
-export type TAppRouter = RealAppRouter;
-export type RouterInputs = RealRouterInputs;
-export type RouterOutputs = RealRouterOutputs;
+export type { TAppRouter, RouterInputs, RouterOutputs } from '@repo/trpc-contract';

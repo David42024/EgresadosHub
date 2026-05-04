@@ -167,7 +167,7 @@ export default function AdminReportesPage() {
                       {TIPO_LABELS[job.tipo] ?? job.tipo}
                     </span>
                     {job.estado === 'ERROR' ? (
-                      <Badge variant="destructive" className="text-[9px] px-2 py-0.5">Error</Badge>
+                      <Badge variant="error" className="text-[9px] px-2 py-0.5">Error</Badge>
                     ) : (
                       <Badge className="text-[9px] px-2 py-0.5 bg-warning/20 dark:bg-amber-900/30 text-warning dark:text-amber-400">{job.estado}</Badge>
                     )}

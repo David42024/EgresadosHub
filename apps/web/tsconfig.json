@@ -18,9 +18,11 @@
     "paths": {
       "@/*": ["./*"],
       "@repo/trpc-contract": [
+        "../../packages/trpc-contract/dist/index.d.ts",
         "../../packages/trpc-contract/dist/index.js"
       ],
       "@repo/trpc-contract/*": [
+        "../../packages/trpc-contract/dist/*.d.ts",
         "../../packages/trpc-contract/dist/*"
       ]
     }
