@@ -136,13 +136,18 @@ export class ReportesService {
 
       // Guardar PDF
       const storagePath = this.config.get<string>('PDF_STORAGE_PATH', './storage/pdfs');
+      this.logger.log(`Guardando PDF en: ${storagePath}`);
+      this.logger.log(`CWD actual: ${process.cwd()}`);
       await fs.mkdir(storagePath, { recursive: true });
       const filename = `${dto.tipo}_${jobId}.pdf`;
       const filepath = path.join(storagePath, filename);
+      this.logger.log(`Ruta completa del PDF: ${filepath}`);
       await fs.writeFile(filepath, pdfBuffer);
+      this.logger.log(`PDF guardado exitosamente, tamaño: ${pdfBuffer.length} bytes`);
 
       const baseUrl = this.config.get<string>('PDF_BASE_URL', 'http://localhost:3001/storage/pdfs');
       const url = `${baseUrl}/${filename}`;
+      this.logger.log(`URL generada para el PDF: ${url}`);
 
       // Actualizar job
       await this.jobRepo.update(jobId, {
