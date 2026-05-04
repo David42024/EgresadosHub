@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────
-# API (NestJS) Dockerfile - Production & Development
+# API (NestJS) Dockerfile - Production
 # ─────────────────────────────────────────────────────────────────
 
 # ─── Base Stage ─────────────────────────────────────────────────
@@ -70,18 +70,3 @@ ENV PORT=8080
 EXPOSE 8080
 
 CMD ["node", "dist/main"]
-
-# ─── Development Stage ──────────────────────────────────────────
-FROM dependencies AS development
-
-# Copy source code for hot reload
-COPY apps/api ./apps/api
-COPY packages ./packages
-COPY turbo.json ./
-
-WORKDIR /app/apps/api
-
-ENV PORT=8080
-EXPOSE 8080
-
-CMD ["pnpm", "start:dev"]

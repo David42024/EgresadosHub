@@ -22,7 +22,6 @@ services:
       branch: main
       deploy_on_push: true
     dockerfile_path: apps/api/Dockerfile
-    dockerfile_target: production
     source_dir: .
     instance_count: 1
     instance_size_slug: basic-xs  # Cambiar a basic-xs para producción
@@ -79,7 +78,6 @@ services:
       branch: main
       deploy_on_push: true
     dockerfile_path: apps/web/Dockerfile
-    dockerfile_target: production
     source_dir: .
     instance_count: 1
     instance_size_slug: basic-xs

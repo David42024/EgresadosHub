@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────
-# Web (Next.js) Dockerfile - Production & Development
+# Web (Next.js) Dockerfile - Production
 # ─────────────────────────────────────────────────────────────────
 
 # ─── Base Stage ─────────────────────────────────────────────────
@@ -63,17 +63,3 @@ WORKDIR /app/apps/web
 EXPOSE 3000
 
 CMD ["pnpm", "start"]
-
-# ─── Development Stage ──────────────────────────────────────────
-FROM dependencies AS development
-
-# Copy source code for hot reload
-COPY apps/web ./apps/web
-COPY packages ./packages
-COPY turbo.json ./
-
-WORKDIR /app/apps/web
-
-EXPOSE 3000
-
-CMD ["pnpm", "dev"]
