@@ -202,7 +202,7 @@ export class EgresadosService {
         (SELECT COUNT(*) FROM postulaciones WHERE egresado_id = $1) as total_postulaciones,
         (SELECT COUNT(*) FROM postulaciones WHERE egresado_id = $1 AND estado = 'EN_REVISION') as total_en_revision,
         (SELECT COUNT(*) FROM postulaciones WHERE egresado_id = $1 AND estado = 'ENTREVISTA') as total_entrevistas,
-        (SELECT COUNT(*) FROM ofertas WHERE is_active = true) as total_ofertas
+        (SELECT COUNT(*) FROM ofertas WHERE estado = 'ACTIVA') as total_ofertas
     `, [egresadoId]);
 
     const r = rows[0];
