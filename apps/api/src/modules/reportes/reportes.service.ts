@@ -142,7 +142,11 @@ export class ReportesService {
       });
 
       // Guardar PDF
-      const storagePath = this.config.get<string>('PDF_STORAGE_PATH', './storage/pdfs');
+      const rawStoragePath = this.config.get<string>('PDF_STORAGE_PATH', 'storage/pdfs');
+      const storagePath = path.isAbsolute(rawStoragePath) 
+        ? rawStoragePath 
+        : path.join(process.cwd(), rawStoragePath);
+        
       this.logger.log(`Guardando PDF en: ${storagePath}`);
       this.logger.log(`CWD actual: ${process.cwd()}`);
       await fs.mkdir(storagePath, { recursive: true });
@@ -158,9 +162,9 @@ export class ReportesService {
       }
 
       const envBaseUrl = this.config.get<string>('PDF_BASE_URL');
-      const baseUrl = envBaseUrl || 'http://localhost:3001/storage/pdfs';
+      const baseUrl = envBaseUrl || '/storage/pdfs';
       const url = `${baseUrl}/${filename}`;
-      this.logger.log(`URL generada para el PDF: ${url} (Base: ${envBaseUrl || 'default'})`);
+      this.logger.log(`URL generada para el PDF: ${url} (Base: ${envBaseUrl || 'relative-default'})`);
 
       // Actualizar job
       await this.jobRepo.update(jobId, {
