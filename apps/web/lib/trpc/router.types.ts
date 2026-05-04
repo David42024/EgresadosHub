@@ -1,5 +1,8 @@
 /**
- * Re-exportación del tipo TAppRouter para consumo desde el frontend.
- * Usa @repo/trpc-contract que exporta los tipos compartidos entre API y Web.
+ * TAppRouter como any para evitar dependencia circular API ↔ Web.
+ * El router real está en apps/api/src/trpc/app.router.ts
+ * FIXME: Implementar generación de tipos independiente para type-safety completo.
  */
-export type { TAppRouter, RouterInputs, RouterOutputs } from '@repo/trpc-contract';
+export type TAppRouter = any;
+export type RouterInputs = any;
+export type RouterOutputs = any;
