@@ -1,0 +1,92 @@
+# DigitalOcean App Platform Specification
+# Para deployar: doctl apps create --spec .do/app.yaml
+# o subir a GitHub y conectar en DigitalOcean Dashboard
+
+name: egresados-platform
+region: nyc1
+
+# ─── Base de Datos PostgreSQL ──────────────────────────────────────────────
+databases:
+  - name: egresados-db
+    engine: PG
+    version: "16"
+    size: db-s-dev-database  # Plan básico, cambiar a db-s-1vcpu-1gb para producción
+    num_nodes: 1
+
+# ─── Servicios ───────────────────────────────────────────────────────────────
+services:
+  # Backend API (NestJS)
+  - name: egresados-api
+    github:
+      repo: David42024/EgresadosHub
+      branch: main
+      deploy_on_push: true
+    source_dir: apps/api
+    run_command: node dist/main.js
+    build_command: npm install && npm run build
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs  # Cambiar a basic-xs para producción
+    http_port: 3001
+    health_check:
+      http_path: /health
+      timeout_seconds: 10
+      port: 3001
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: DATABASE_URL
+        value: ${egresados-db.DATABASE_URL}
+      - key: JWT_SECRET
+        generate_value: true  # DigitalOcean genera automáticamente
+      - key: JWT_REFRESH_SECRET
+        generate_value: true
+      - key: API_INTERNAL_URL
+        value: http://egresados-api:3001
+      - key: CORS_ORIGIN
+        value: ${APP_URL}  # URL del frontend proporcionada por DigitalOcean
+      - key: CLOUDINARY_CLOUD_NAME
+        value: ""
+        type: SECRET
+      - key: CLOUDINARY_API_KEY
+        value: ""
+        type: SECRET
+      - key: CLOUDINARY_API_SECRET
+        value: ""
+        type: SECRET
+    alerts:
+      - rule: DEPLOYMENT_FAILED
+        disabled: false
+      - rule: DOMAIN_FAILED
+        disabled: false
+
+  # Frontend Web (Next.js)
+  - name: egresados-web
+    github:
+      repo: David42024/EgresadosHub
+      branch: main
+      deploy_on_push: true
+    source_dir: apps/web
+    run_command: npm run start
+    build_command: npm install && npm run build
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 3000
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: NEXT_PUBLIC_API_URL
+        value: ${egresados-api.PUBLIC_URL}  # URL pública del API
+      - key: API_INTERNAL_URL
+        value: http://egresados-api:3001  # Comunicación interna entre servicios
+    alerts:
+      - rule: DEPLOYMENT_FAILED
+        disabled: false
+
+# ─── Información de dominios ─────────────────────────────────────────────────
+domains: []
