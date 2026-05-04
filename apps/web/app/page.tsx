@@ -24,7 +24,7 @@ export default async function HomePage() {
   let stats = { totalEgresados: 0, totalOfertasActivas: 0, totalEmpresas: 0 };
   try {
     const api = await createServerTrpcClient();
-    const kpis: any = await (api as any).query('analytics.getAdminKpis');
+    const kpis = await api.analytics.getAdminKpis.query();
     if (kpis !== null && kpis !== undefined) {
       stats = {
         totalEgresados:      Number(kpis.totalEgresados ?? 0),
