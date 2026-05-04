@@ -58,11 +58,6 @@ services:
       - key: CLOUDINARY_API_SECRET
         value: ""
         type: SECRET
-    alerts:
-      - rule: DEPLOYMENT_FAILED
-        disabled: false
-      - rule: DOMAIN_FAILED
-        disabled: false
 
   # Frontend Web (Next.js)
   - name: egresados-web
@@ -86,9 +81,6 @@ services:
         value: ${egresados-api.PUBLIC_URL}  # URL pública del API
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080  # Comunicación interna entre servicios
-    alerts:
-      - rule: DEPLOYMENT_FAILED
-        disabled: false
 
 # ─── Información de dominios ─────────────────────────────────────────────────
 domains: []
