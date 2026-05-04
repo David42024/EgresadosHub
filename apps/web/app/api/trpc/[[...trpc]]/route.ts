@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleRequest(req: NextRequest) {
+  // IMPORTANTE: En producción, API_INTERNAL_URL debe apuntar a la URL interna del backend (ej: http://api:8080)
   const apiHost =
     process.env.API_INTERNAL_URL ??
     process.env.NEXT_PUBLIC_API_INTERNAL_URL ??
@@ -26,19 +27,20 @@ async function handleRequest(req: NextRequest) {
   console.log(`[TRPC Proxy] ${req.method} ${url.pathname} → ${targetUrl}`);
 
   const headers = new Headers(req.headers);
-  // Importante: No reenviar el host original para evitar problemas de SSL/CORS en el backend
   headers.delete('host');
+  headers.delete('connection');
 
   try {
+    const body = req.method === 'POST' ? await req.arrayBuffer() : undefined;
+    
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
-      body: req.method === 'POST' ? await req.blob() : undefined,
+      body: body,
       cache: 'no-store',
     });
 
     const responseHeaders = new Headers(response.headers);
-    // Eliminar headers que puedan causar conflictos con el streaming de Next.js
     responseHeaders.delete('content-encoding');
     responseHeaders.delete('content-length');
 
@@ -49,9 +51,20 @@ async function handleRequest(req: NextRequest) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('TRPC Proxy Error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to proxy request' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    
+    // Devolver un error en formato tRPC para que el cliente no falle con "json fallido"
+    return new Response(
+      JSON.stringify({
+        error: {
+          message: 'Error de conexión con el backend',
+          code: -32603,
+          data: { code: 'INTERNAL_SERVER_ERROR', httpStatus: 500 }
+        }
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

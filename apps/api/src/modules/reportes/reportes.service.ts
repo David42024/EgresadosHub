@@ -152,9 +152,10 @@ export class ReportesService {
       await fs.writeFile(filepath, pdfBuffer);
       this.logger.log(`PDF guardado exitosamente, tamaño: ${pdfBuffer.length} bytes`);
 
-      const baseUrl = this.config.get<string>('PDF_BASE_URL', 'http://localhost:3001/storage/pdfs');
+      const envBaseUrl = this.config.get<string>('PDF_BASE_URL');
+      const baseUrl = envBaseUrl || 'http://localhost:3001/storage/pdfs';
       const url = `${baseUrl}/${filename}`;
-      this.logger.log(`URL generada para el PDF: ${url}`);
+      this.logger.log(`URL generada para el PDF: ${url} (Base: ${envBaseUrl || 'default'})`);
 
       // Actualizar job
       await this.jobRepo.update(jobId, {
@@ -165,9 +166,11 @@ export class ReportesService {
 
       return url;
     } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+      this.logger.error(`Error generando PDF para job ${jobId}: ${errorMsg}`);
       await this.jobRepo.update(jobId, {
         estado: 'ERROR',
-        error: error instanceof Error ? error.message : 'Error desconocido',
+        error: errorMsg,
       });
       throw error;
     } finally {

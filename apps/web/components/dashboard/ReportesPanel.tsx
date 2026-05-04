@@ -111,9 +111,10 @@ export function ReportesPanel() {
     );
   }, [jobStatus]);
 
-  const handleGenerar = (tipo: string, isAsync: boolean) => {
+  const handleGenerar = (tipo: string, _isAsync: boolean) => {
     setGenerating(tipo);
-    generarMutation.mutate({ tipo, formato: 'PDF', asincrono: isAsync });
+    // ✅ Siempre usamos asincrono: true para evitar timeouts en el proxy tRPC al usar Puppeteer
+    generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
   };
 
   return (

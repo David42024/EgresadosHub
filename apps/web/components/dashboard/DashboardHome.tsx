@@ -219,10 +219,20 @@ function EmpresaHome({ user, greeting }: { user: DashboardHomeProps['user']; gre
 }
 
 function AdminHome({ user, currentDate }: { user: DashboardHomeProps['user']; currentDate: string }) {
-  const { data: kpis, isLoading } = (trpc as any).analytics.getAdminKpis.useQuery() as any;
+  const { data: kpis, isLoading, error } = (trpc as any).analytics.getAdminKpis.useQuery() as any;
 
   if (isLoading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary-500" /></div>;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-64 items-center justify-center text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-3xl border border-red-100 dark:border-red-900/30">
+        <p className="text-red-600 dark:text-red-400 font-bold mb-2">Error cargando estadísticas</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Hubo un problema al conectar con el servidor.</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>Reintentar</Button>
+      </div>
+    );
   }
 
   return (

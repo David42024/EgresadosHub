@@ -76,7 +76,7 @@ export default function AdminAnalyticsPage() {
 
   const handleDownload = () => {
     generarReporte.mutate(
-      { tipo: 'DEMANDA_LABORAL', formato: 'PDF' },
+      { tipo: 'DEMANDA_LABORAL', formato: 'PDF', asincrono: true },
       {
         onSuccess: (data: any) => {
           setDownloadingJobId(data.jobId);

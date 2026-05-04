@@ -113,21 +113,27 @@ export default function AdminEgresadosPage() {
     toast({ title: "Exportación exitosa", description: "El archivo CSV ha sido generado." });
   };
 
-  const handleExportPDF = async () => {
-    try {
-      await (trpc as any).reportes.generar.mutate({
-        tipo: 'LISTADO_EGRESADOS',
-        formato: 'PDF',
-        filtros: {
-          search: debouncedSearch,
-          carrera: carrera === 'ALL' ? undefined : carrera,
-          anioEgreso: anioEgreso === 'ALL' ? undefined : parseInt(anioEgreso),
-        }
-      });
-      toast({ title: "Generando PDF", description: "Iniciando descarga..." });
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo generar el PDF.", variant: "destructive" });
+  const generarReporte = (trpc as any).reportes.generar.useMutation({
+    onSuccess: (data: any) => {
+      toast({ title: "Generando PDF", description: "El reporte se está procesando en segundo plano." });
+      // Aquí podrías redirigir al panel de reportes para ver el progreso
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo iniciar la generación del PDF.", variant: "destructive" });
     }
+  });
+
+  const handleExportPDF = () => {
+    generarReporte.mutate({
+      tipo: 'LISTADO_EGRESADOS',
+      formato: 'PDF',
+      asincrono: true, // ✅ Siempre asincrono para evitar timeouts
+      filtros: {
+        search: debouncedSearch,
+        carrera: carrera === 'ALL' ? undefined : carrera,
+        anioEgreso: anioEgreso === 'ALL' ? undefined : parseInt(anioEgreso),
+      }
+    });
   };
 
   return (
