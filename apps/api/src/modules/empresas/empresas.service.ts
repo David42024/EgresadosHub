@@ -37,9 +37,8 @@ export class EmpresasService {
     }
 
     let rows: Empresa[] = [];
-    let total = 0;
     try {
-      [rows, total] = await qb
+      [rows] = await qb
         .offset(skip)
         .limit(limit)
         .getManyAndCount();
@@ -47,15 +46,10 @@ export class EmpresasService {
       console.error(`!!! [SQL ERROR] EmpresasService.findAll:`, e);
       throw e;
     }
-    
-    console.error(`\n!!! [BACKEND DEBUG] Empresas.findAll: total=${total}, returned=${rows.length}, skip=${skip}, limit=${limit}`);
-    if (rows.length > 0) console.error(`!!! [BACKEND DEBUG] First ID: ${rows[0].id}`);
-    
-
 
     const companyIds = rows.map(r => r.id);
-    let postulationCounts: Record<string, number> = {};
-    let ofertaCounts: Record<string, number> = {};
+    const postulationCounts: Record<string, number> = {};
+    const ofertaCounts: Record<string, number> = {};
 
     if (companyIds.length > 0) {
       // Conteo de postulaciones
