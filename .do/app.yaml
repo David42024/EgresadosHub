@@ -56,20 +56,26 @@ services:
       - key: CLOUDINARY_API_SECRET
         value: ""
         type: SECRET
-      # ─── OAuth Google ──────────────────────────────────────────────────────
+      # ─── OAuth Google (configure in Dashboard) ─────────────────────────────
       - key: GOOGLE_CLIENT_ID
-        value: ""
         type: SECRET
+        scope: RUN_TIME
       - key: GOOGLE_CLIENT_SECRET
-        value: ""
         type: SECRET
-      # ─── OAuth GitHub ──────────────────────────────────────────────────────
+        scope: RUN_TIME
+      - key: GOOGLE_CALLBACK_URL
+        value: ${egresados-api.PUBLIC_URL}/api/auth/google/callback
+        scope: RUN_TIME
+      # ─── OAuth GitHub (configure in Dashboard) ─────────────────────────────
       - key: GITHUB_CLIENT_ID
-        value: ""
         type: SECRET
+        scope: RUN_TIME
       - key: GITHUB_CLIENT_SECRET
-        value: ""
         type: SECRET
+        scope: RUN_TIME
+      - key: GITHUB_CALLBACK_URL
+        value: ${egresados-api.PUBLIC_URL}/api/auth/github/callback
+        scope: RUN_TIME
 
   # Frontend Web (Next.js)
   - name: egresados-web
