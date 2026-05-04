@@ -82,5 +82,21 @@ services:
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080  # Comunicación interna entre servicios
 
+# ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
+ingress:
+  rules:
+    # API (NestJS) - Sirve las API en /api (más específico, va primero)
+    - component:
+        name: egresados-api
+      match:
+        path:
+          prefix: /api
+    # Web (Next.js) - Sirve el frontend en la raíz
+    - component:
+        name: egresados-web
+      match:
+        path:
+          prefix: /
+
 # ─── Información de dominios ─────────────────────────────────────────────────
 domains: []
