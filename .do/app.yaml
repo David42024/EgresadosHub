@@ -40,9 +40,11 @@ services:
       - key: DATABASE_URL
         value: ${egresados-db.DATABASE_URL}
       - key: JWT_SECRET
-        generate_value: true  # DigitalOcean genera automáticamente
+        value: ${JWT_SECRET}
+        scope: RUN_TIME
       - key: JWT_REFRESH_SECRET
-        generate_value: true
+        value: ${JWT_REFRESH_SECRET}
+        scope: RUN_TIME
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080
       - key: CORS_ORIGIN
