@@ -23,7 +23,7 @@ services:
       deploy_on_push: true
     source_dir: .
     run_command: cd apps/api && node dist/main.js
-    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/api build
+    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/trpc-contract build && pnpm --filter @repo/api build
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs  # Cambiar a basic-xs para producción
@@ -67,7 +67,7 @@ services:
       deploy_on_push: true
     source_dir: .
     run_command: cd apps/web && npm run start
-    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/web build
+    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/trpc-contract build && pnpm --filter @repo/web build
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs
