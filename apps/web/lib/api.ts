@@ -11,6 +11,11 @@ function getCookie(name: string): string | null {
 }
 
 function getTrpcUrl() {
+  // Si estamos en el browser y no es localhost, usar proxy relativo
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost')) {
+    return '/api/trpc';
+  }
+  // En desarrollo local, conectar directo al backend
   const base =
     process.env.NEXT_PUBLIC_API_INTERNAL_URL ??
     process.env.NEXT_PUBLIC_API_URL ??
