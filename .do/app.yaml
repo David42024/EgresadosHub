@@ -103,6 +103,12 @@ services:
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:
   rules:
+    # Archivos estáticos (PDFs) - Van al API
+    - component:
+        name: egresados-api
+      match:
+        path:
+          prefix: /storage
     # API (NestJS) - Solo /api/v1 va al backend
     - component:
         name: egresados-api
