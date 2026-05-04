@@ -50,15 +50,18 @@ async function handleRequest(req: NextRequest) {
     });
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('TRPC Proxy Error:', error);
+    console.error('[TRPC Proxy ERROR]:', error);
     
-    // Devolver un error en formato tRPC para que el cliente no falle con "json fallido"
     return new Response(
       JSON.stringify({
         error: {
-          message: 'Error de conexión con el backend',
+          message: 'Error de conexión con el backend (Proxy)',
           code: -32603,
-          data: { code: 'INTERNAL_SERVER_ERROR', httpStatus: 500 }
+          data: { 
+            code: 'INTERNAL_SERVER_ERROR', 
+            httpStatus: 500,
+            stack: error instanceof Error ? error.stack : undefined
+          }
         }
       }),
       {

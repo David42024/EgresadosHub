@@ -148,9 +148,14 @@ export class ReportesService {
       await fs.mkdir(storagePath, { recursive: true });
       const filename = `${dto.tipo}_${jobId}.pdf`;
       const filepath = path.join(storagePath, filename);
-      this.logger.log(`Ruta completa del PDF: ${filepath}`);
-      await fs.writeFile(filepath, pdfBuffer);
-      this.logger.log(`PDF guardado exitosamente, tamaño: ${pdfBuffer.length} bytes`);
+      this.logger.log(`Iniciando escritura de PDF en: ${filepath}`);
+      try {
+        await fs.writeFile(filepath, pdfBuffer);
+        this.logger.log(`PDF guardado exitosamente, tamaño: ${pdfBuffer.length} bytes`);
+      } catch (writeError: any) {
+        this.logger.error(`Fallo crítico al escribir el archivo PDF: ${writeError.message}`);
+        throw writeError;
+      }
 
       const envBaseUrl = this.config.get<string>('PDF_BASE_URL');
       const baseUrl = envBaseUrl || 'http://localhost:3001/storage/pdfs';

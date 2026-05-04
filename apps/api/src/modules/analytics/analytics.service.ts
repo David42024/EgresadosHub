@@ -53,6 +53,21 @@ export class AnalyticsService {
     public readonly dataSource: DataSource,
   ) {}
 
+  async getPublicStats() {
+    const rows = await this.dataSource.query(`
+      SELECT
+        (SELECT COUNT(*) FROM egresados) AS total_egresados,
+        (SELECT COUNT(*) FROM empresas WHERE verificada = true) AS total_empresas,
+        (SELECT COUNT(*) FROM ofertas WHERE estado = 'ACTIVA') AS ofertas_activas
+    `);
+    const data = rows[0];
+    return {
+      totalEgresados:      Number(data.total_egresados),
+      totalEmpresas:       Number(data.total_empresas),
+      totalOfertasActivas: Number(data.ofertas_activas),
+    };
+  }
+
   async getAdminKpis(_filter?: unknown): Promise<AdminKpisDto> {
     const rows = await this.dataSource.query(`
       WITH base AS (
@@ -79,26 +94,42 @@ export class AnalyticsService {
           (SELECT ROUND(STDDEV_POP(salario_max)::numeric, 2)
            FROM ofertas WHERE estado = 'ACTIVA' AND salario_max IS NOT NULL)       AS salario_desviacion
       )
-      SELECT
-        total_egresados,
-        total_empresas,
-        ofertas_activas,
-        postulaciones_mes,
-        tasa_empleabilidad,
-        salario_promedio,
-        salario_desviacion,
-        ROUND(
-          (total_egresados - egresados_anterior)::numeric
-          / NULLIF(egresados_anterior, 0) * 100, 1
-        ) AS variacion_egresados,
-        ROUND(
-          (ofertas_activas - ofertas_anterior)::numeric
-          / NULLIF(ofertas_anterior, 0) * 100, 1
-        ) AS variacion_ofertas
-      FROM base
-    `) as RawAdminKpis[];
+        SELECT
+          total_egresados,
+          total_empresas,
+          ofertas_activas,
+          postulaciones_mes,
+          COALESCE(tasa_empleabilidad, 0) AS tasa_empleabilidad,
+          salario_promedio,
+          salario_desviacion,
+          ROUND(
+            (total_egresados - egresados_anterior)::numeric
+            / NULLIF(egresados_anterior, 0) * 100, 1
+          ) AS variacion_egresados,
+          ROUND(
+            (ofertas_activas - ofertas_anterior)::numeric
+            / NULLIF(ofertas_anterior, 0) * 100, 1
+          ) AS variacion_ofertas
+        FROM base
+      `) as RawAdminKpis[];
+
+    if (!rows || rows.length === 0) {
+      this.logger.warn('La consulta de KPIs no devolvió resultados (base vacía)');
+      return {
+        totalEgresados: 0,
+        totalEmpresas: 0,
+        totalOfertasActivas: 0,
+        totalPostulacionesMes: 0,
+        tasaEmpleabilidadGlobal: 0,
+        variacionEgresados: 0,
+        variacionOfertas: 0,
+        salarioPromedioGlobal: null,
+        salarioDesviacionGlobal: null,
+      };
+    }
 
     const kpis = rows[0];
+    this.logger.log(`KPIs recuperados: ${JSON.stringify(kpis)}`);
 
     return {
       totalEgresados:          Number(kpis.total_egresados),

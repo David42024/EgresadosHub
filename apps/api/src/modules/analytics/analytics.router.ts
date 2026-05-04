@@ -1,7 +1,7 @@
 import { Injectable }    from '@nestjs/common';
 import { z }              from 'zod';
 import { AnalyticsFilterSchema } from '@repo/trpc-contract';
-import { router, protectedProc, adminProc, empresaProc } from '../../trpc/trpc.service';
+import { router, publicProc, protectedProc, adminProc, empresaProc } from '../../trpc/trpc.service';
 import { AnalyticsService } from './analytics.service';
 
 @Injectable()
@@ -10,6 +10,9 @@ export class AnalyticsRouter {
 
   get router() {
     return router({
+      getPublicStats: publicProc
+        .query(() => this.service.getPublicStats()),
+
       getAdminKpis: adminProc
         .input(AnalyticsFilterSchema.optional())
         .query(({ input }) => this.service.getAdminKpis(input)),
