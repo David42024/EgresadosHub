@@ -27,7 +27,7 @@ services:
     instance_size_slug: basic-xs  # Cambiar a basic-xs para producción
     http_port: 8080
     health_check:
-      http_path: /health
+      http_path: /api/v1/health
       timeout_seconds: 10
       port: 8080
     envs:

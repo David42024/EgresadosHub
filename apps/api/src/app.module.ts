@@ -14,6 +14,7 @@ import { ReportesModule } from './modules/reportes/reportes.module';
 import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { TrpcModule } from './trpc/trpc.module';
+import { HealthModule } from './modules/health/health.module';
 import { databaseConfig } from './database/database.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -73,6 +74,9 @@ import { join } from 'path';
 
     // ─── tRPC ──────────────────────────────────────────────────────────────
     TrpcModule,
+
+    // ─── Health Check ─────────────────────────────────────────────────────
+    HealthModule,
 
     // ─── Archivos Estáticos ────────────────────────────────────────────────
     ServeStaticModule.forRoot({
