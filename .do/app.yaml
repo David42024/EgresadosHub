@@ -21,9 +21,9 @@ services:
       repo: David42024/EgresadosHub
       branch: main
       deploy_on_push: true
-    source_dir: apps/api
-    run_command: node dist/main.js
-    build_command: npm install && npm run build
+    source_dir: .
+    run_command: cd apps/api && node dist/main.js
+    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/api build
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs  # Cambiar a basic-xs para producción
@@ -65,9 +65,9 @@ services:
       repo: David42024/EgresadosHub
       branch: main
       deploy_on_push: true
-    source_dir: apps/web
-    run_command: npm run start
-    build_command: npm install && npm run build
+    source_dir: .
+    run_command: cd apps/web && npm run start
+    build_command: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @repo/web build
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs
