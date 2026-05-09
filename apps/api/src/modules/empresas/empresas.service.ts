@@ -90,7 +90,7 @@ export class EmpresasService {
       totalOfertas: ofertaCounts[r.id] || 0
     }));
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return { data: data as any, nextCursor: null, total };
   }
 
@@ -151,7 +151,7 @@ export class EmpresasService {
     
     return {
       ...empresa,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       ofertas: ofertas.map((o: any) => ({
         id: o.id,
         titulo: o.titulo,

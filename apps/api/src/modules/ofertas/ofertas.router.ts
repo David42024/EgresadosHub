@@ -21,7 +21,7 @@ export class OfertasRouter {
         }))
         .query(({ input }) => {
           console.error(`\n!!! [ROUTER DEBUG] Ofertas.list input:`, input);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           return this.service.findAll(input as any);
         }),
 

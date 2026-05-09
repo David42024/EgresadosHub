@@ -15,7 +15,7 @@ export class UploadService {
   }
 
   async uploadImage(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     file: any,
     folder: string,
     publicId?: string,
@@ -39,7 +39,7 @@ export class UploadService {
   }
 
   async uploadFile(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     file: any,
     folder: string,
     publicId: string,

@@ -105,7 +105,7 @@ export class EgresadosService {
       throw new ForbiddenException('No puedes editar el perfil de otro egresado');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const updateData: any = {};
     if (dto.nombres !== undefined) updateData.nombres = dto.nombres;
     if (dto.apellidos !== undefined) updateData.apellidos = dto.apellidos;
@@ -182,7 +182,7 @@ export class EgresadosService {
       ORDER BY e.anio_egreso DESC, e.carrera ASC
     `);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return rows.map((r: any) => ({
       anioEgreso: Number(r.anio_egreso),
       carrera: r.carrera,

@@ -20,10 +20,10 @@ export class UploadController {
     },
   }))
   async uploadLogo(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @UploadedFile() file: any,
     @Body('imageUrl') imageUrl: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @Req() req: any
   ) {
     const user = req.user;
@@ -48,10 +48,10 @@ export class UploadController {
     },
   }))
   async uploadAvatar(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @UploadedFile() file: any,
     @Body('imageUrl') imageUrl: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @Req() req: any
   ) {
     const user = req.user;
@@ -75,10 +75,10 @@ export class UploadController {
     },
   }))
   async uploadCV(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @UploadedFile() file: any,
     @Body('imageUrl') imageUrl: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     @Req() req: any
   ) {
     const user = req.user;

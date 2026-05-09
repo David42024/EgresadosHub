@@ -21,7 +21,7 @@ export class EmpresasRouter {
         }))
         .query(({ input }) => {
           console.error(`\n!!! [ROUTER DEBUG] Empresas.list input:`, input);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           return this.service.findAll(input as any);
         }),
 
