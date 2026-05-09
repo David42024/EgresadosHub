@@ -19,11 +19,13 @@ import {
   ArrowLeft,
   ChevronRight,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  Wrench
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { toast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function OfertaDetailsPage() {
   const { id } = useParams() as { id: string };

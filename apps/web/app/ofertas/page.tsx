@@ -26,6 +26,7 @@ import {
 import { useDebounce } from '@/hooks/use-debounce';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useAuthStore } from '@/lib/auth-store';
+import { cn } from '@/lib/utils';
 
 function PublicOfertasPageContent() {
   const { user } = useAuthStore();
