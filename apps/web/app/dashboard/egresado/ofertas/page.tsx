@@ -42,6 +42,8 @@ export default function EgresadoOfertasPage() {
   const [habilidades, setHabilidades] = useState<string[]>([]);
   const [soloRecomendadas, setSoloRecomendadas] = useState<boolean>(false);
 
+  const [page, setPage] = useState(1);
+  const LIMIT = 8;
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isLoading } = (trpc as any).ofertas.publicList.useQuery({
@@ -50,11 +52,13 @@ export default function EgresadoOfertasPage() {
     salarioMin,
     salarioMax,
     habilidades: habilidades.length > 0 ? habilidades : undefined,
-    take: 50,
-    skip: 0,
+    limit: LIMIT,
+    skip: (page - 1) * LIMIT,
   }) as any;
 
   const ofertas = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / LIMIT);
 
   const ofertasFiltradas = soloRecomendadas
     ? ofertas.filter((o: any) => {
@@ -72,6 +76,7 @@ export default function EgresadoOfertasPage() {
     setModalidad('ALL');
     setHabilidades([]);
     setSoloRecomendadas(false);
+    setPage(1);
   };
 
   const toggleRecomendaciones = () => {
@@ -308,6 +313,31 @@ export default function EgresadoOfertasPage() {
                   </CardFooter>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-xl font-bold"
+              >
+                Anterior
+              </Button>
+              <span className="text-sm font-bold text-text-muted">
+                Página {page} de {totalPages} &nbsp;·&nbsp; {total} ofertas
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-xl font-bold"
+              >
+                Siguiente
+              </Button>
             </div>
           )}
         </div>

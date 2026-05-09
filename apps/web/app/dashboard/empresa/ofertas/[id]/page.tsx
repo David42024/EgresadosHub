@@ -130,11 +130,11 @@ export default function OfertaDetailsPage() {
             </CardHeader>
             <CardContent className="p-8 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="min-w-0 overflow-hidden">
                   <h3 className="text-xl font-black text-text-primary mb-4 flex items-center gap-2">
                     <Briefcase className="h-5 w-5 text-primary-600" /> Descripción del Puesto
                   </h3>
-                  <p className="text-text-secondary leading-relaxed whitespace-pre-wrap text-base italic">
+                  <p className="text-text-secondary leading-relaxed whitespace-pre-wrap text-base italic break-words overflow-wrap-anywhere">
                     "{oferta.descripcion}"
                   </p>
                 </div>
@@ -153,9 +153,9 @@ export default function OfertaDetailsPage() {
                         <span className="text-sm font-bold text-text-muted">Fecha Límite:</span>
                         <Badge variant="outline" className={cn(
                           "font-black border-none",
-                          oferta.cierraAt && new Date(oferta.cierraAt) < new Date() ? "bg-red-500/10 text-red-600" : "bg-primary-600/10 text-primary-600"
+                          oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date() ? "bg-red-500/10 text-red-600" : "bg-primary-600/10 text-primary-600"
                         )}>
-                          {oferta.cierraAt ? new Date(oferta.cierraAt).toLocaleDateString() : 'Sin fecha límite'}
+                          {oferta.cierraAt ? new Date(oferta.cierraAt + 'T12:00:00').toLocaleDateString() : 'Sin fecha límite'}
                         </Badge>
                       </div>
                     </div>

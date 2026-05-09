@@ -236,7 +236,7 @@ export default function EditarOfertaPage() {
                       name="modalidad"
                       control={control}
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select key={field.value} onValueChange={field.onChange} value={field.value}>
                           <SelectTrigger className="h-12 bg-bg-base/30 border-border rounded-xl font-bold">
                             <SelectValue placeholder="Seleccionar..." />
                           </SelectTrigger>

@@ -35,7 +35,8 @@ export default function PublicOfertaDetailPage() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [carta, setCarta] = useState('');
-  const [documentos, setDocumentos] = useState<{ tipo: 'CV' | 'CERTIFICADO' | 'CARTA' | 'PORTAFOLIO' | 'OTRO', nombre: string, url: string }[]>([]);
+  // Map de nombre-documento -> {nombre, url} para tracking por campo
+  const [documentosMap, setDocumentosMap] = useState<Record<string, { nombre: string; url: string } | null>>({});
 
   // Increment vistas on load
   const incrementVistasMutation = (trpc as any).ofertas.incrementVistas.useMutation() as any;
@@ -56,7 +57,7 @@ export default function PublicOfertaDetailPage() {
     onSuccess: async () => {
       toast({ title: '¡Postulación exitosa!', description: 'Has postulado a esta oferta laboral.' });
       setIsModalOpen(false);
-      setDocumentos([]); // Limpiar tras éxito
+      setDocumentosMap({}); // Limpiar tras éxito
       await refetchPostulaciones();
     },
     onError: (e: any) => {
@@ -68,8 +69,19 @@ export default function PublicOfertaDetailPage() {
 
   const handlePostular = () => {
     if (!oferta?.id) return;
+    // Convertir el map a array de documentos para el payload
+    const documentos = Object.values(documentosMap).filter(Boolean).map(d => ({
+      tipo: 'OTRO' as const,
+      nombre: d!.nombre,
+      url: d!.url,
+    }));
+    console.log('[Postulación] Enviando documentos:', documentos);
     postularMutation.mutate({ ofertaId: oferta.id, cartaPresentacion: carta, documentos });
   };
+
+  // Docs requeridos de la oferta (se inicializan en el modal al abrirse)
+  const docsRequeridos: string[] = oferta?.documentosRequeridos ?? ['CV Base'];
+  const allDocsUploaded = docsRequeridos.every(doc => documentosMap[doc]?.url);
 
   if (isLoading) {
     return (
@@ -184,9 +196,9 @@ export default function PublicOfertaDetailPage() {
                 </div>
               </div>
 
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="overflow-hidden">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Descripción del puesto</h3>
-                <div className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                <div className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                   {oferta.descripcion}
                 </div>
 
@@ -221,9 +233,9 @@ export default function PublicOfertaDetailPage() {
                   </span>
                   <Badge variant="outline" className={cn(
                     "font-black border-none",
-                    oferta.cierraAt && new Date(oferta.cierraAt) < new Date() ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
+                    oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date() ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
                   )}>
-                    {oferta.cierraAt ? new Date(oferta.cierraAt).toLocaleDateString() : 'Sin límite'}
+                    {oferta.cierraAt ? new Date(oferta.cierraAt + 'T12:00:00').toLocaleDateString() : 'Sin límite'}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -251,7 +263,7 @@ export default function PublicOfertaDetailPage() {
                     <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-slate-100 text-slate-400 border-none">
                       Ya estás postulado
                     </Button>
-                  ) : (oferta.cierraAt && new Date(oferta.cierraAt) < new Date()) ? (
+                  ) : (oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date()) ? (
                     <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-red-50 text-red-400 border-none">
                       Convocatoria Cerrada
                     </Button>
@@ -283,58 +295,75 @@ export default function PublicOfertaDetailPage() {
                             />
                           </div>
 
-                          <div className="space-y-4">
-                            <div className="flex justify-between items-end">
-                              <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                                <Briefcase className="h-4 w-4" /> Documentos Requeridos
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Briefcase className="h-4 w-4 text-slate-400" />
+                              <label className="text-xs font-black uppercase tracking-widest text-slate-400">
+                                Documentos Requeridos
                               </label>
-                              <div className="flex gap-1">
-                                {oferta.documentosRequeridos?.map((doc: string) => (
-                                  <Badge key={doc} variant="outline" className="text-[9px] font-black uppercase bg-blue-50 text-blue-600 border-blue-200">
-                                    {doc}
-                                  </Badge>
-                                ))}
-                              </div>
+                              <span className="ml-auto text-[10px] font-bold text-slate-400">
+                                {Object.values(documentosMap).filter(Boolean).length}/{docsRequeridos.length} subidos
+                              </span>
                             </div>
 
-                            <UploadDropzone
-                              endpoint="documentUploader"
-                              onClientUploadComplete={(res) => {
-                                const newDocs = res.map((file) => ({
-                                  tipo: 'OTRO' as const,
-                                  nombre: file.name,
-                                  url: file.url
-                                }));
-                                setDocumentos((prev) => [...prev, ...newDocs]);
-                                toast({ title: 'Archivo subido', description: 'Documento adjuntado correctamente.' });
-                              }}
-                              onUploadError={(error: Error) => {
-                                toast({ variant: 'destructive', title: 'Error al subir', description: error.message });
-                              }}
-                              className="ut-button:bg-blue-600 ut-label:text-blue-600 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 hover:bg-slate-100 transition-colors"
-                            />
-
-                            {documentos.length > 0 && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                                {documentos.map((doc, i) => (
-                                  <div key={i} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-sm animate-in fade-in zoom-in duration-300">
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-                                        <Briefcase className="h-4 w-4 text-blue-600" />
-                                      </div>
-                                      <span className="truncate text-xs font-bold text-slate-700" title={doc.nombre}>{doc.nombre}</span>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setDocumentos(documentos.filter((_, idx) => idx !== i))}
-                                      className="h-6 w-6 rounded-md hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"
-                                    >
-                                      ✕
-                                    </button>
+                            {docsRequeridos.map((docNombre: string) => {
+                              const uploaded = documentosMap[docNombre];
+                              return (
+                                <div key={docNombre} className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                      {uploaded ? (
+                                        <span className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[8px]">✓</span>
+                                      ) : (
+                                        <span className="h-4 w-4 rounded-full border-2 border-slate-300 inline-block" />
+                                      )}
+                                      {docNombre}
+                                    </span>
+                                    {uploaded && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setDocumentosMap(prev => ({ ...prev, [docNombre]: null }));
+                                          console.log('[Upload] Documento eliminado:', docNombre);
+                                        }}
+                                        className="text-xs text-red-400 hover:text-red-600 font-bold"
+                                      >
+                                        Quitar
+                                      </button>
+                                    )}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                  {uploaded ? (
+                                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                                      <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                                        <Briefcase className="h-4 w-4 text-green-600" />
+                                      </div>
+                                      <span className="truncate text-xs font-bold text-green-700" title={uploaded.nombre}>
+                                        {uploaded.nombre}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <UploadDropzone
+                                      endpoint="documentUploader"
+                                      onClientUploadComplete={(res) => {
+                                        const file = res[0];
+                                        if (!file) return;
+                                        console.log(`[Upload] ${docNombre} subido:`, file.url);
+                                        setDocumentosMap(prev => ({
+                                          ...prev,
+                                          [docNombre]: { nombre: file.name, url: file.url }
+                                        }));
+                                        toast({ title: 'Archivo subido', description: `${docNombre} adjuntado correctamente.` });
+                                      }}
+                                      onUploadError={(error: Error) => {
+                                        console.error(`[Upload Error] ${docNombre}:`, error.message);
+                                        toast({ variant: 'destructive', title: `Error al subir ${docNombre}`, description: error.message });
+                                      }}
+                                      className="ut-button:bg-blue-600 ut-label:text-blue-600 border border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors ut-upload-icon:hidden"
+                                    />
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                         <ModalFooter className="p-8 bg-slate-50 border-t border-slate-100">
@@ -342,11 +371,11 @@ export default function PublicOfertaDetailPage() {
                             Cancelar
                           </Button>
                           <Button
-                            disabled={postularMutation.isPending || documentos.length === 0}
+                            disabled={postularMutation.isPending || !allDocsUploaded}
                             onClick={handlePostular}
-                            className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-xl shadow-lg shadow-blue-500/20"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-xl shadow-lg shadow-blue-500/20 disabled:opacity-50"
                           >
-                            {postularMutation.isPending ? 'Enviando...' : 'Confirmar Postulación'}
+                            {postularMutation.isPending ? 'Enviando...' : !allDocsUploaded ? `Faltan ${docsRequeridos.filter(d => !documentosMap[d]?.url).length} documento(s)` : 'Confirmar Postulación'}
                           </Button>
                         </ModalFooter>
                       </ModalContent>
