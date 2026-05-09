@@ -121,6 +121,21 @@ export function ReportesPanel() {
     },
   ) as any;
 
+  // Fetch initial history
+  const { data: historyJobs } = (trpc as any).reportes.listar.useQuery(
+    { limit: 5 },
+    { refetchOnWindowFocus: false }
+  );
+
+  useEffect(() => {
+    if (historyJobs && activeJobs.length === 0) {
+      setActiveJobs(historyJobs.map((j: any) => ({
+        ...j,
+        pdfDisponible: j.estado === 'COMPLETADO',
+      })));
+    }
+  }, [historyJobs]);
+
   // ✅ Actualizar el job en la lista cuando cambia el estado
   useEffect(() => {
     if (jobStatus === null || jobStatus === undefined) return;
@@ -146,14 +161,16 @@ export function ReportesPanel() {
     generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
   };
 
+  const utils = trpc.useUtils();
+
   /**
    * Descarga el PDF de un job completado consultando el endpoint `descargar`.
    */
   const handleDescargarJob = useCallback(async (jobId: string) => {
     setDownloading(jobId);
     try {
-      // Llamada directa al endpoint tRPC para obtener el base64
-      const result = await (trpc as any).reportes.descargar.query({ jobId });
+      // Llamada directa al endpoint tRPC para obtener el base64 usando utils
+      const result = await (utils as any).reportes.descargar.fetch({ jobId });
       if (result?.base64) {
         descargarBase64ComoPdf(result.base64, result.filename || `reporte_${jobId}.pdf`);
       }
@@ -162,7 +179,7 @@ export function ReportesPanel() {
     } finally {
       setDownloading(null);
     }
-  }, []);
+  }, [utils]);
 
   return (
     <Card className="shadow-sm dark:border-gray-800">
