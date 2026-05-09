@@ -56,7 +56,6 @@ services:
     volumes:
       - ./apps/api:/app
       - /app/node_modules
-      - pdf_storage:/app/storage/pdfs
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,7 +100,6 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  pdf_storage:
 
 networks:
   default:

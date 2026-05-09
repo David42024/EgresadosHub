@@ -13,9 +13,9 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "db:migrate": "typeorm migration:run -d src/database/data-source.ts",
-    "db:migrate:revert": "typeorm migration:revert -d src/database/data-source.ts",
-    "db:seed": "ts-node src/database/seeds/run.ts"
+    "db:migrate": "ts-node -P tsconfig.json -r reflect-metadata -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d src/database/data-source.ts",
+    "db:migrate:revert": "ts-node -P tsconfig.json -r reflect-metadata -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d src/database/data-source.ts",
+    "db:seed": "ts-node -P tsconfig.json -r reflect-metadata -r tsconfig-paths/register src/database/seeds/run.ts"
   },
   "dependencies": {
     "@nestjs/bull": "^10.2.0",
@@ -68,6 +68,7 @@
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "^2.0.0",
+    "dotenv": "^17.4.2",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

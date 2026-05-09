@@ -131,8 +131,20 @@ jobs:
 
       - name: Health Check API
         run: |
-          curl -f https://${{ secrets.DO_API_URL }}/health || exit 1
+          API_URL="${{ secrets.DO_API_URL }}"
+          if [ -z "$API_URL" ]; then
+            echo "⚠️ DO_API_URL secret is not set. Using fallback or skipping."
+            # Si no hay secreto, no podemos hacer el curl a un host inexistente
+            exit 0
+          fi
+          # Asegurar que el path incluya el prefijo global api/v1
+          curl -f "https://$API_URL/api/v1/health" || exit 1
 
       - name: Health Check Web
         run: |
-          curl -f https://${{ secrets.DO_WEB_URL }} || exit 1
+          WEB_URL="${{ secrets.DO_WEB_URL }}"
+          if [ -z "$WEB_URL" ]; then
+            echo "⚠️ DO_WEB_URL secret is not set. Skipping."
+            exit 0
+          fi
+          curl -f "https://$WEB_URL" || exit 1

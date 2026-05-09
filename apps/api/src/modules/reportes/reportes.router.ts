@@ -18,6 +18,10 @@ export class ReportesRouter {
         .input(z.object({ jobId: z.string().uuid() }))
         .query(({ input }) => this.service.getJobStatus(input.jobId)),
 
+      descargar: protectedProc
+        .input(z.object({ jobId: z.string().uuid() }))
+        .query(({ input }) => this.service.getJobPdf(input.jobId)),
+
       listar: adminProc
         .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }).optional())
         .query(({ input }) => this.service.listarJobs(input?.limit ?? 20)),

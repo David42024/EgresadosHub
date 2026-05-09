@@ -7,9 +7,6 @@ import { Queue } from 'bull';
 import { ConfigService } from '@nestjs/config';
 import * as puppeteer from 'puppeteer';
 import * as Handlebars from 'handlebars';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
 import { TipoReporte } from '@repo/trpc-contract';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ReporteJob } from './entities/reporte-job.entity';
@@ -39,13 +36,13 @@ export class ReportesService {
   ) {}
 
   onModuleInit() {
-    const pdfBaseUrl = this.config.get<string>('PDF_BASE_URL', 'no-configurado');
-    const pdfStoragePath = this.config.get<string>('PDF_STORAGE_PATH', 'no-configurado');
-    this.logger.log(`PDF_BASE_URL configurado: ${pdfBaseUrl}`);
-    this.logger.log(`PDF_STORAGE_PATH configurado: ${pdfStoragePath}`);
+    this.logger.log('ReportesService inicializado — modo on-demand (sin almacenamiento en disco)');
   }
 
-  async generarReporte(dto: { tipo: TipoReporte; filtros?: unknown; asincrono?: boolean }, userId: string): Promise<{ jobId: string; url?: string }> {
+  async generarReporte(
+    dto: { tipo: TipoReporte; filtros?: unknown; asincrono?: boolean },
+    userId: string,
+  ): Promise<{ jobId: string; base64?: string; filename?: string }> {
     const job = await this.jobRepo.save(
       this.jobRepo.create({
         tipo: dto.tipo,
@@ -55,30 +52,51 @@ export class ReportesService {
     );
 
     if (dto.asincrono === true) {
-      // Generar en background
+      // Generar en background — el PDF se guarda como base64 en la BD
       void this.queue.add('generar-pdf', { jobId: job.id, dto }, { jobId: job.id });
       return { jobId: job.id };
     }
 
-    // Generación síncrona (para reportes simples)
-    const url = await this.generarPDF(job.id, dto as { tipo: TipoReporte; filtros?: Record<string, unknown> });
-    return { jobId: job.id, url };
+    // Generación síncrona — devolver el base64 directamente
+    const result = await this.generarPDF(job.id, dto as { tipo: TipoReporte; filtros?: Record<string, unknown> });
+    return { jobId: job.id, base64: result.base64, filename: result.filename };
   }
 
   async getJobStatus(jobId: string) {
-    const job = await this.jobRepo.findOne({ where: { id: jobId } });
+    const job = await this.jobRepo.findOne({
+      select: ['id', 'estado', 'url', 'error', 'creadoAt'],
+      where: { id: jobId },
+    });
     if (job === null || job === undefined) throw new NotFoundException(`Job ${jobId} no encontrado`);
     return {
-      jobId: job.id,
-      estado: job.estado,
-      url: job.url,
-      error: job.error,
-      creadoAt: job.creadoAt.toISOString(),
+      jobId:       job.id,
+      estado:      job.estado,
+      url:         job.url,
+      error:       job.error,
+      creadoAt:    job.creadoAt.toISOString(),
+      // El PDF está disponible para descarga cuando el estado es COMPLETADO
+      pdfDisponible: job.estado === 'COMPLETADO',
     };
+  }
+
+  /**
+   * Recupera el PDF base64 de un job completado para descarga directa.
+   */
+  async getJobPdf(jobId: string): Promise<{ base64: string; filename: string }> {
+    const job = await this.jobRepo.findOne({ where: { id: jobId } });
+    if (job === null || job === undefined) {
+      throw new NotFoundException(`Job ${jobId} no encontrado`);
+    }
+    if (job.estado !== 'COMPLETADO' || !job.pdfBase64) {
+      throw new NotFoundException(`El PDF del job ${jobId} aún no está disponible`);
+    }
+    const filename = `${job.tipo}_${job.id}.pdf`;
+    return { base64: job.pdfBase64, filename };
   }
 
   async listarJobs(limit = 20) {
     const jobs = await this.jobRepo.find({
+      select: ['id', 'tipo', 'estado', 'url', 'error', 'creadoAt', 'completadoAt'],
       order: { creadoAt: 'DESC' },
       take: limit,
     });
@@ -93,20 +111,17 @@ export class ReportesService {
     }));
   }
 
-  async generarPDF(jobId: string, dto: { tipo: TipoReporte; filtros?: Record<string, unknown> }): Promise<string> {
+  async generarPDF(
+    jobId: string,
+    dto: { tipo: TipoReporte; filtros?: Record<string, unknown> },
+  ): Promise<{ base64: string; filename: string }> {
     let browser: puppeteer.Browser | null = null;
     try {
       // Obtener datos según tipo de reporte
       const data = await this.obtenerDatos(dto.tipo, dto.filtros);
 
-      // Cargar template HTML
-      const templatePath = path.join(__dirname, 'templates', `${dto.tipo.toLowerCase()}.hbs`);
-      let templateSrc: string;
-      try {
-        templateSrc = await fs.readFile(templatePath, 'utf-8');
-      } catch {
-        templateSrc = this.getDefaultTemplate(dto.tipo);
-      }
+      // Usar template embebido (no depende de filesystem)
+      const templateSrc = this.getDefaultTemplate(dto.tipo);
 
       // Registrar helpers
       Handlebars.registerHelper('isArray', (value) => Array.isArray(value));
@@ -121,11 +136,7 @@ export class ReportesService {
       const html = template({ data, filtros: dto.filtros, generadoEn: new Date().toLocaleString('es-PE') });
 
       // Generar PDF con Puppeteer
-      const puppeteerCacheDir = path.join(os.homedir(), '.cache', 'puppeteer', 'chrome');
-      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH
-        || (process.platform === 'win32'
-          ? path.join(puppeteerCacheDir, 'win64-127.0.6533.88', 'chrome-win64', 'chrome.exe')
-          : undefined);
+      const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
 
       browser = await puppeteer.launch({
         headless: true,
@@ -141,39 +152,20 @@ export class ReportesService {
         margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' },
       });
 
-      // Guardar PDF
-      const rawStoragePath = this.config.get<string>('PDF_STORAGE_PATH', 'storage/pdfs');
-      const storagePath = path.isAbsolute(rawStoragePath) 
-        ? rawStoragePath 
-        : path.join(process.cwd(), rawStoragePath);
-        
-      this.logger.log(`Guardando PDF en: ${storagePath}`);
-      this.logger.log(`CWD actual: ${process.cwd()}`);
-      await fs.mkdir(storagePath, { recursive: true });
+      // Convertir a base64 en memoria (sin escribir a disco)
+      const base64 = Buffer.from(pdfBuffer).toString('base64');
       const filename = `${dto.tipo}_${jobId}.pdf`;
-      const filepath = path.join(storagePath, filename);
-      this.logger.log(`Iniciando escritura de PDF en: ${filepath}`);
-      try {
-        await fs.writeFile(filepath, pdfBuffer);
-        this.logger.log(`PDF guardado exitosamente, tamaño: ${pdfBuffer.length} bytes`);
-      } catch (writeError: any) {
-        this.logger.error(`Fallo crítico al escribir el archivo PDF: ${writeError.message}`);
-        throw writeError;
-      }
 
-      const envBaseUrl = this.config.get<string>('PDF_BASE_URL');
-      const baseUrl = envBaseUrl || '/storage/pdfs';
-      const url = `${baseUrl}/${filename}`;
-      this.logger.log(`URL generada para el PDF: ${url} (Base: ${envBaseUrl || 'relative-default'})`);
+      this.logger.log(`PDF generado en memoria: ${filename} (${pdfBuffer.length} bytes)`);
 
-      // Actualizar job
+      // Actualizar job en la BD — guardar base64 para descarga posterior
       await this.jobRepo.update(jobId, {
         estado: 'COMPLETADO',
-        url,
+        pdfBase64: base64,
         completadoAt: new Date(),
       });
 
-      return url;
+      return { base64, filename };
     } catch (error: unknown) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
       this.logger.error(`Error generando PDF para job ${jobId}: ${errorMsg}`);

@@ -64,10 +64,33 @@ export default function AdminAnalyticsPage() {
   ) as any;
 
   useEffect(() => {
-    if (jobStatus?.estado === 'COMPLETADO' && jobStatus?.url) {
-      window.open(jobStatus.url, '_blank');
-      setDownloadingJobId(null);
-      toast({ title: 'Reporte listo', description: 'Se abrió el PDF en una nueva pestaña.' });
+    if (jobStatus?.estado === 'COMPLETADO' && jobStatus?.pdfDisponible) {
+      // Descargar el PDF via base64
+      (trpc as any).reportes.descargar.query({ jobId: downloadingJobId })
+        .then((result: any) => {
+          if (result?.base64) {
+            const byteChars = atob(result.base64);
+            const byteNumbers = new Array(byteChars.length);
+            for (let i = 0; i < byteChars.length; i++) {
+              byteNumbers[i] = byteChars.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = result.filename || 'reporte.pdf';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 100);
+          }
+          setDownloadingJobId(null);
+          toast({ title: 'Reporte listo', description: 'El PDF se ha descargado correctamente.' });
+        })
+        .catch(() => {
+          setDownloadingJobId(null);
+          toast({ variant: 'destructive', title: 'Error', description: 'No se pudo descargar el PDF.' });
+        });
     } else if (jobStatus?.estado === 'ERROR') {
       setDownloadingJobId(null);
       toast({ variant: 'destructive', title: 'Error', description: jobStatus.error || 'Falló la generación del reporte.' });
@@ -80,7 +103,7 @@ export default function AdminAnalyticsPage() {
       {
         onSuccess: (data: any) => {
           setDownloadingJobId(data.jobId);
-          toast({ title: 'Generando reporte...', description: 'Se abrirá automáticamente cuando esté listo.' });
+          toast({ title: 'Generando reporte...', description: 'Se descargará automáticamente cuando esté listo.' });
         },
         onError: () => {
           toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar la generación del reporte.' });

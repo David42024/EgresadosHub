@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { trpc }                from '@/lib/trpc/client';
 import { Button }              from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -48,21 +48,50 @@ interface JobStatus {
   url?:     string;
   error?:   string;
   creadoAt: string;
-  tipo?:    string;   // ← campo local para mostrar el label
+  tipo?:    string;           // ← campo local para mostrar el label
+  pdfDisponible?: boolean;    // ← indica si el PDF está listo para descarga
+}
+
+/**
+ * Convierte un string base64 a un Blob PDF y dispara la descarga en el navegador.
+ */
+function descargarBase64ComoPdf(base64: string, filename: string) {
+  const byteChars = atob(base64);
+  const byteNumbers = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+
+  // Limpiar después de la descarga
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 export function ReportesPanel() {
   const [activeJobs, setActiveJobs] = useState<JobStatus[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   const generarMutation = (trpc as any).reportes.generar.useMutation({
     onSuccess: (data: any, variables: any) => {
       setGenerating(null);
       const tipoLabel = TIPOS_REPORTE.find(t => t.tipo === variables.tipo)?.label ?? variables.tipo;
 
-      if (data.url !== null && data.url !== undefined) {
-        // Descarga inmediata
-        window.open(data.url, '_blank');
+      if (data.base64) {
+        // Descarga inmediata — el PDF vino en la respuesta
+        const filename = data.filename || `${variables.tipo}_reporte.pdf`;
+        descargarBase64ComoPdf(data.base64, filename);
       } else {
         // Job asíncrono — agregar al tracking
         setActiveJobs((prev) => [
@@ -101,10 +130,10 @@ export function ReportesPanel() {
         j.jobId === jobStatus.jobId
           ? {
               ...j,
-              estado: jobStatus.estado,
-              url:    jobStatus.url    ?? undefined,
-              error:  jobStatus.error  ?? undefined,
-              creadoAt: new Date().toISOString(),
+              estado:        jobStatus.estado,
+              error:         jobStatus.error  ?? undefined,
+              pdfDisponible: jobStatus.pdfDisponible ?? false,
+              creadoAt:      new Date().toISOString(),
             }
           : j,
       ),
@@ -116,6 +145,24 @@ export function ReportesPanel() {
     // ✅ Siempre usamos asincrono: true para evitar timeouts en el proxy tRPC al usar Puppeteer
     generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
   };
+
+  /**
+   * Descarga el PDF de un job completado consultando el endpoint `descargar`.
+   */
+  const handleDescargarJob = useCallback(async (jobId: string) => {
+    setDownloading(jobId);
+    try {
+      // Llamada directa al endpoint tRPC para obtener el base64
+      const result = await (trpc as any).reportes.descargar.query({ jobId });
+      if (result?.base64) {
+        descargarBase64ComoPdf(result.base64, result.filename || `reporte_${jobId}.pdf`);
+      }
+    } catch (err) {
+      console.error('Error al descargar el PDF:', err);
+    } finally {
+      setDownloading(null);
+    }
+  }, []);
 
   return (
     <Card className="shadow-sm dark:border-gray-800">
@@ -188,20 +235,23 @@ export function ReportesPanel() {
                     {new Date(job.creadoAt).toLocaleTimeString('es-PE')}
                   </span>
 
-                  {(job.estado === 'COMPLETADO' && job.url !== undefined) ? (
-                    <a
-                    href={job.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0"
-                  >
-                    Descargar
-                  </a>
-                ) : (
-                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase shrink-0 dark:border-gray-700 dark:text-gray-400">
-                    {job.estado}
-                  </Badge>
-                )}
+                  {(job.estado === 'COMPLETADO' && job.pdfDisponible) ? (
+                    <button
+                      onClick={() => handleDescargarJob(job.jobId)}
+                      disabled={downloading === job.jobId}
+                      className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0 disabled:opacity-50"
+                    >
+                      {downloading === job.jobId ? (
+                        <Loader2 className="h-3 w-3 animate-spin inline" />
+                      ) : (
+                        'Descargar'
+                      )}
+                    </button>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] h-5 px-1.5 uppercase shrink-0 dark:border-gray-700 dark:text-gray-400">
+                      {job.estado}
+                    </Badge>
+                  )}
                 </div>
               ))}
             </div>

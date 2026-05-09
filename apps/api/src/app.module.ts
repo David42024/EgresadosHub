@@ -15,7 +15,7 @@ import { NotificacionesModule } from './modules/notificaciones/notificaciones.mo
 import { UploadModule } from './modules/upload/upload.module';
 import { TrpcModule } from './trpc/trpc.module';
 import { HealthModule } from './modules/health/health.module';
-import { databaseConfig } from './database/database.config';
+import { databaseConfig } from './database/data-source';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -82,14 +82,6 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'public'),
       serveRoot: '/',
-    }),
-    // Servir PDFs generados desde /storage/pdfs (excluido del prefijo api/v1)
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'storage', 'pdfs'),
-      serveRoot: '/storage/pdfs',
-      serveStaticOptions: {
-        fallthrough: false, // Devolver 404 si no existe
-      },
     }),
   ],
 })

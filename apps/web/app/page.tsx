@@ -35,7 +35,7 @@ export default async function HomePage() {
   } catch (err) {
     // Log error for debugging
     // eslint-disable-next-line no-console
-    console.error('[HomePage] Error fetching stats:', err);
+    console.error('[HomePage] Error fetching stats:', err instanceof Error ? { message: err.message, stack: err.stack } : err);
   }
 
   return (

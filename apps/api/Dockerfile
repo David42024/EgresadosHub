@@ -61,9 +61,6 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages ./packages
 
-# Copy storage directory for PDFs
-RUN mkdir -p /app/apps/api/storage/pdfs
-
 WORKDIR /app/apps/api
 
 ENV PORT=8080

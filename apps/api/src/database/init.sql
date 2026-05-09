@@ -195,6 +195,7 @@ CREATE TABLE IF NOT EXISTS reportes_jobs (
   estado     VARCHAR(50)  NOT NULL DEFAULT 'PENDIENTE',
   filtros    JSONB,
   url        VARCHAR(500),
+  pdf_base64 TEXT,
   error      TEXT,
   creado_por UUID REFERENCES users(id),
   creado_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),

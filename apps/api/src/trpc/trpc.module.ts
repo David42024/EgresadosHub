@@ -1,4 +1,4 @@
-import { Module, Controller, Req, Res, All }  from '@nestjs/common';
+import { Module, Controller, Req, Res, All, Logger }  from '@nestjs/common';
 import { JwtModule }      from '@nestjs/jwt';
 import { ConfigService }  from '@nestjs/config';
 import * as trpcExpress   from '@trpc/server/adapters/express';
@@ -25,6 +25,7 @@ import { NotificacionesRouter } from '../modules/notificaciones/notificaciones.r
 @Controller('trpc')
 export class TrpcController {
   private readonly appRouterInstance;
+  private readonly logger = new Logger('TrpcController');
 
   constructor(
     private readonly trpcService: TrpcService,
@@ -47,10 +48,27 @@ export class TrpcController {
       reportes: this.reportes,
       notificaciones: this.notificaciones,
     });
+    
+    // DEBUG: Log keys of the router
+    const procedures = Object.keys(this.appRouterInstance._def.record || {});
+    this.logger.log(`tRPC Procedures loaded: ${procedures.join(', ')}`);
   }
 
   @All('*')
   async handleTrpc(@Req() req: Request, @Res() res: Response) {
+    this.logger.log(`Original URL: ${req.url} | Path: ${req.path}`);
+
+    const prefix = '/api/v1/trpc';
+    if (req.url.startsWith(prefix)) {
+      req.url = req.url.replace(prefix, '') || '/';
+    }
+    // trpcExpress lee req.path en Express
+    if (req.path && req.path.startsWith(prefix)) {
+      (req as any).path = req.path.replace(prefix, '') || '/';
+    }
+    
+    this.logger.log(`Final URL: ${req.url} | Path: ${req.path}`);
+
     return trpcExpress.createExpressMiddleware({
       router:     this.appRouterInstance,
       createContext: ({ req, res }) => this.trpcService.createContext(req, res),

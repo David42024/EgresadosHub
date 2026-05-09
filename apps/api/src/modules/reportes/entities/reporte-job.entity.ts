@@ -19,6 +19,9 @@ export class ReporteJob {
   @Column({ type: 'varchar', nullable: true })
   url?: string | null;
 
+  @Column({ name: 'pdf_base64', type: 'text', nullable: true })
+  pdfBase64?: string | null;
+
   @Column({ type: 'text', nullable: true })
   error?: string | null;
 

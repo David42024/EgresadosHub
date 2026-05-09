@@ -14,19 +14,13 @@ vi.mock('puppeteer', () => ({
   }),
 }));
 
-// Mock de fs
-vi.mock('fs/promises', () => ({
-  readFile: vi.fn().mockResolvedValue('mock-template'),
-  mkdir: vi.fn(),
-  writeFile: vi.fn(),
-}));
-
 describe('ReportesService', () => {
   let service: ReportesService;
   const mockJobRepo = {
     create: vi.fn(),
     save: vi.fn(),
     findOne: vi.fn(),
+    find: vi.fn(),
     update: vi.fn(),
   };
   const mockQueue = {
@@ -70,18 +64,24 @@ describe('ReportesService', () => {
   });
 
   describe('generarPDF', () => {
-    it('should generate a PDF and update job status', async () => {
+    it('should generate a PDF in memory and return base64', async () => {
       const dto = { tipo: 'DEMANDA_LABORAL' as TipoReporte };
       mockAnalytics.getDemandaHabilidades.mockResolvedValue([]);
       mockAnalytics.getEvolucionMensual.mockResolvedValue([]);
       
       mockJobRepo.update.mockResolvedValue({});
 
-      const url = await service.generarPDF('j1', dto);
+      const result = await service.generarPDF('j1', dto);
 
-      expect(url).toContain('mock-val/DEMANDA_LABORAL_j1.pdf');
+      // Should return base64 and filename instead of a URL
+      expect(result).toHaveProperty('base64');
+      expect(result).toHaveProperty('filename');
+      expect(result.filename).toBe('DEMANDA_LABORAL_j1.pdf');
+      expect(typeof result.base64).toBe('string');
+      expect(result.base64.length).toBeGreaterThan(0);
       expect(mockJobRepo.update).toHaveBeenCalledWith('j1', expect.objectContaining({
         estado: 'COMPLETADO',
+        pdfBase64: expect.any(String),
       }));
     });
   });
@@ -92,11 +92,35 @@ describe('ReportesService', () => {
       mockJobRepo.findOne.mockResolvedValue(job);
       const result = await service.getJobStatus('j1');
       expect(result.jobId).toBe('j1');
+      expect(result.pdfDisponible).toBe(true);
+    });
+
+    it('should indicate pdfDisponible=false for pending jobs', async () => {
+      const job = { id: 'j2', estado: 'PENDIENTE', creadoAt: new Date() };
+      mockJobRepo.findOne.mockResolvedValue(job);
+      const result = await service.getJobStatus('j2');
+      expect(result.pdfDisponible).toBe(false);
     });
 
     it('should throw NotFoundException if not found', async () => {
       mockJobRepo.findOne.mockResolvedValue(null);
       await expect(service.getJobStatus('j1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getJobPdf', () => {
+    it('should return base64 and filename for completed job', async () => {
+      const job = { id: 'j1', tipo: 'DEMANDA_LABORAL', estado: 'COMPLETADO', pdfBase64: 'abc123' };
+      mockJobRepo.findOne.mockResolvedValue(job);
+      const result = await service.getJobPdf('j1');
+      expect(result.base64).toBe('abc123');
+      expect(result.filename).toBe('DEMANDA_LABORAL_j1.pdf');
+    });
+
+    it('should throw NotFoundException for incomplete job', async () => {
+      const job = { id: 'j1', tipo: 'DEMANDA_LABORAL', estado: 'PENDIENTE', pdfBase64: null };
+      mockJobRepo.findOne.mockResolvedValue(job);
+      await expect(service.getJobPdf('j1')).rejects.toThrow(NotFoundException);
     });
   });
 

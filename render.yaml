@@ -48,14 +48,6 @@ services:
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
-      - key: PDF_STORAGE_PATH
-        value: ./storage/pdfs
-      - key: PDF_BASE_URL
-        value: https://egresados-api.onrender.com/storage/pdfs
-    disk:
-      name: pdf-storage
-      mountPath: /app/apps/api/storage/pdfs
-      sizeGB: 1
 
   # ─── Frontend Web (Next.js) ─────────────────────────────────────
   - type: web

@@ -4,8 +4,8 @@
 
 BEGIN;
 
--- ─── 0. Limpieza de datos (Opcional, comentar si se prefiere mantener) ──────
--- TRUNCATE users, egresados, empresas, ofertas, postulaciones, postulacion_audit, notificaciones CASCADE;
+-- ─── 0. Limpieza de datos (Opcional, se habilita para evitar duplicados en el seed) ──
+TRUNCATE users, egresados, empresas, ofertas, postulaciones, postulacion_audit, notificaciones CASCADE;
 
 -- ─── 1. Usuarios (Password: Test1234!) ──────────────────────────────────────
 -- Hash: $2a$12$MPKJlfPCUsR18MJ0X3VzK.2E/76HI8wBSfJ38Lu6AmjlKmsnlNqK2

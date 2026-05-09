@@ -1,10 +1,20 @@
+import 'reflect-metadata';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService }        from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { join } from 'path';
+import * as dotenv from 'dotenv';
+
+// Cargar variables de entorno para el CLI
+dotenv.config();
+
+if (!process.env.DATABASE_URL) {
+  console.warn('⚠️ DATABASE_URL no encontrada en process.env. Asegúrate de que el archivo .env existe en apps/api/');
+} else {
+  console.log('✅ DATABASE_URL cargada correctamente para la migración.');
+}
 
 // Configuración SSL para DigitalOcean Managed Database
-// El certificado es self-signed, usamos sslmode=no-verify via env var
-// Esto desactiva la verificación del certificado SSL
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Set PGSSLMODE para el driver pg subyacente
@@ -13,11 +23,16 @@ if (isProduction) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
+// basePath apunta a 'src' o 'dist' dependiendo del entorno
+const isDist = __dirname.includes('dist');
+const basePath = typeof __dirname !== 'undefined' ? join(__dirname, '..') : join(process.cwd(), 'src');
+const fileExt = isDist ? '*.js' : '*.ts';
+
 export const databaseConfig = (config: ConfigService): TypeOrmModuleOptions => ({
   type:     'postgres',
   url:      config.get<string>('DATABASE_URL'),
-  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  entities: [join(basePath, '**', `*.entity.${fileExt.replace('*.', '')}`)],
+  migrations: [join(basePath, 'database', 'migrations', fileExt)],
   synchronize: false,               // NUNCA true en producción
   logging: true,
   // Usar ssl=true con rejectUnauthorized: false en extra
@@ -35,8 +50,8 @@ export const databaseConfig = (config: ConfigService): TypeOrmModuleOptions => (
 export const AppDataSource = new DataSource({
   type:       'postgres',
   url:        process.env.DATABASE_URL,
-  entities:   [__dirname + '/../**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  entities:   [join(basePath, '**', `*.entity.${fileExt.replace('*.', '')}`)],
+  migrations: [join(basePath, 'database', 'migrations', fileExt)],
   synchronize: false,
   ssl:        process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 } as DataSourceOptions);
