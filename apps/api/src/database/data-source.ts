@@ -3,10 +3,13 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService }        from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { join } from 'path';
-import * as dotenv from 'dotenv';
-
-// Cargar variables de entorno para el CLI
-dotenv.config();
+// Importar dotenv opcionalmente para el CLI de TypeORM en local
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('dotenv').config();
+} catch (error) {
+  // Silencioso: en producción dotenv se ignora
+}
 
 if (!process.env.DATABASE_URL) {
   console.warn('⚠️ DATABASE_URL no encontrada en process.env. Asegúrate de que el archivo .env existe en apps/api/');
