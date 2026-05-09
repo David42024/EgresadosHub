@@ -26,6 +26,7 @@ import { Modal, ModalTrigger, ModalContent, ModalHeader, ModalTitle, ModalDescri
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { UploadDropzone } from '@/lib/uploadthing';
 
 export default function PublicOfertaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function PublicOfertaDetailPage() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [carta, setCarta] = useState('');
+  const [documentos, setDocumentos] = useState<{ tipo: 'CV' | 'CERTIFICADO' | 'CARTA' | 'PORTAFOLIO' | 'OTRO', nombre: string, url: string }[]>([]);
 
   // Increment vistas on load
   const incrementVistasMutation = (trpc as any).ofertas.incrementVistas.useMutation() as any;
@@ -53,6 +55,7 @@ export default function PublicOfertaDetailPage() {
     onSuccess: async () => {
       toast({ title: '¡Postulación exitosa!', description: 'Has postulado a esta oferta laboral.' });
       setIsModalOpen(false);
+      setDocumentos([]); // Limpiar tras éxito
       await refetchPostulaciones();
     },
     onError: (e: any) => {
@@ -64,7 +67,7 @@ export default function PublicOfertaDetailPage() {
 
   const handlePostular = () => {
     if (!oferta?.id) return;
-    postularMutation.mutate({ ofertaId: oferta.id, cartaPresentacion: carta });
+    postularMutation.mutate({ ofertaId: oferta.id, cartaPresentacion: carta, documentos });
   };
 
   if (isLoading) {
@@ -277,10 +280,48 @@ export default function PublicOfertaDetailPage() {
                             </label>
                             <Textarea 
                               placeholder="Destaca por qué eres el candidato ideal..."
-                              rows={5}
+                              rows={3}
                               value={carta}
                               onChange={(e) => setCarta(e.target.value)}
                             />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              Documentos Adjuntos (CV, Certificados, etc.)
+                            </label>
+                            <UploadDropzone
+                              endpoint="documentUploader"
+                              onClientUploadComplete={(res) => {
+                                const newDocs = res.map((file) => ({
+                                  tipo: 'OTRO' as const,
+                                  nombre: file.name,
+                                  url: file.url
+                                }));
+                                setDocumentos((prev) => [...prev, ...newDocs]);
+                                toast({ title: 'Archivo subido', description: 'Documento adjuntado correctamente.' });
+                              }}
+                              onUploadError={(error: Error) => {
+                                toast({ variant: 'destructive', title: 'Error al subir', description: error.message });
+                              }}
+                              className="ut-button:bg-blue-600 ut-button:ut-readying:bg-blue-600/50 ut-label:text-blue-600 ut-button:ut-uploading:bg-blue-600/50 ut-button:ut-uploading:after:bg-blue-600"
+                            />
+                            {documentos.length > 0 && (
+                              <ul className="mt-3 space-y-2">
+                                {documentos.map((doc, i) => (
+                                  <li key={i} className="flex items-center justify-between p-2 text-sm bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
+                                    <span className="truncate max-w-[200px] text-slate-700 dark:text-slate-300 font-medium" title={doc.nombre}>{doc.nombre}</span>
+                                    <button 
+                                      type="button" 
+                                      onClick={() => setDocumentos(documentos.filter((_, idx) => idx !== i))}
+                                      className="text-red-500 hover:text-red-700 font-bold px-2"
+                                    >
+                                      ✕
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
                         </div>
                         <ModalFooter>

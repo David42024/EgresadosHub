@@ -80,6 +80,7 @@ export default function NuevaOfertaPage() {
     salarioMin: z.number().min(1, "Obligatorio"),
     salarioMax: z.number().min(1, "Obligatorio"),
     habilidadesReq: z.array(z.any()).min(1, "Añade al menos una"),
+    cierraAt: z.string().optional(),
   });
 
   const { register, control, trigger, handleSubmit, watch, setValue, formState: { errors } } = useForm({
@@ -91,7 +92,8 @@ export default function NuevaOfertaPage() {
       ubicacion: '',
       salarioMin: 0,
       salarioMax: 0,
-      habilidadesReq: []
+      habilidadesReq: [],
+      cierraAt: '',
     }
   });
 
@@ -118,8 +120,17 @@ export default function NuevaOfertaPage() {
   };
 
   const handleFinalSubmit = (data: any) => {
+    let cierraAtIso = undefined;
+    if (data.cierraAt) {
+      const d = new Date(data.cierraAt);
+      if (!isNaN(d.getTime())) {
+        cierraAtIso = d.toISOString();
+      }
+    }
+
     const payload = {
       ...data,
+      cierraAt: cierraAtIso,
       estado: 'ACTIVA',
       habilidadesReq: data.habilidadesReq?.map((h: any) => h.nombre || h) || []
     };
@@ -177,7 +188,7 @@ export default function NuevaOfertaPage() {
                   <Input {...register("titulo")} placeholder="Ej. Desarrollador Senior" className="h-12 text-lg font-bold bg-bg-base/30 border-border focus:border-primary-500 rounded-xl transition-all" />
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="space-y-3">
                     <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Modalidad</label>
                     <Controller
@@ -203,6 +214,14 @@ export default function NuevaOfertaPage() {
                       <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
                       <Input {...register("ubicacion")} className="pl-10 h-12 bg-bg-base/30 border-border rounded-xl font-bold" />
                     </div>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Fecha Límite</label>
+                    <Input 
+                      type="date" 
+                      {...register("cierraAt")} 
+                      className="h-12 bg-bg-base/30 border-border rounded-xl font-bold text-text-primary" 
+                    />
                   </div>
                 </div>
 

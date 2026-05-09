@@ -34,6 +34,13 @@ export class Postulacion {
   @Column({ name: 'carta_presentacion', type: 'text', nullable: true })
   cartaPresentacion?: string;
 
+  @Column({ type: 'jsonb', nullable: true, default: [] })
+  documentos?: {
+    tipo: 'CV' | 'CERTIFICADO' | 'CARTA' | 'PORTAFOLIO' | 'OTRO';
+    nombre: string;
+    url: string;
+  }[];
+
   @OneToMany(() => PostulacionAudit, (a) => a.postulacion, { cascade: true })
   audits!: PostulacionAudit[];
 

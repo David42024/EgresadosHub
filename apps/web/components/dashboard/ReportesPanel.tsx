@@ -161,7 +161,7 @@ export function ReportesPanel() {
     generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
   };
 
-  const utils = trpc.useUtils();
+  const utils = (trpc as any).useUtils();
 
   /**
    * Descarga el PDF de un job completado consultando el endpoint `descargar`.

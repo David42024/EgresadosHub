@@ -27,6 +27,11 @@ export const CambiarEstadoSchema = z.object({
 export const CreatePostulacionSchema = z.object({
   ofertaId:          z.string().uuid(),
   cartaPresentacion: z.string().max(2000).optional(),
+  documentos: z.array(z.object({
+    tipo: z.enum(['CV', 'CERTIFICADO', 'CARTA', 'PORTAFOLIO', 'OTRO']),
+    nombre: z.string(),
+    url: z.string().url(),
+  })).optional(),
 });
 
 export type CambiarEstadoDto = z.infer<typeof CambiarEstadoSchema>;
