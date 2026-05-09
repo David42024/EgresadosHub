@@ -127,19 +127,59 @@ export default function OfertaDetailsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-8 space-y-8">
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <h3 className="text-xl font-black text-text-primary mb-4 flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-primary-600" /> Descripción del Puesto
-                </h3>
-                <p className="text-text-secondary leading-relaxed whitespace-pre-wrap text-base italic">
-                  "{oferta.descripcion}"
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <h3 className="text-xl font-black text-text-primary mb-4 flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-primary-600" /> Descripción del Puesto
+                  </h3>
+                  <p className="text-text-secondary leading-relaxed whitespace-pre-wrap text-base italic">
+                    "{oferta.descripcion}"
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-amber-600 flex items-center gap-2 mb-3">
+                      <Clock className="h-4 w-4" /> Cronograma de Convocatoria
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-text-muted">Fecha de Creación:</span>
+                        <span className="text-sm font-black text-text-primary">{new Date(oferta.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-text-muted">Fecha Límite:</span>
+                        <Badge variant="outline" className={cn(
+                          "font-black border-none",
+                          oferta.cierraAt && new Date(oferta.cierraAt) < new Date() ? "bg-red-500/10 text-red-600" : "bg-primary-600/10 text-primary-600"
+                        )}>
+                          {oferta.cierraAt ? new Date(oferta.cierraAt).toLocaleDateString() : 'Sin fecha límite'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {oferta.documentosRequeridos && oferta.documentosRequeridos.length > 0 && (
+                    <div className="p-6 rounded-2xl bg-blue-500/5 border border-blue-500/20">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-blue-600 flex items-center gap-2 mb-3">
+                        <Wrench className="h-4 w-4" /> Documentos Solicitados
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {oferta.documentosRequeridos.map((doc: string) => (
+                          <Badge key={doc} variant="secondary" className="bg-bg-base font-bold text-[10px] uppercase">
+                            {doc}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {oferta.habilidadesReq && oferta.habilidadesReq.length > 0 && (
                 <div className="space-y-4 pt-6 border-t border-border/50">
                   <h3 className="text-lg font-black text-text-primary flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary-600" /> Habilidades Requeridas
+                    <TrendingUp className="h-5 w-5 text-primary-600" /> Habilidades Técnicas Buscadas
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {oferta.habilidadesReq.map((h: string) => (

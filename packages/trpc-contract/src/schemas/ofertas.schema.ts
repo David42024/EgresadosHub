@@ -29,6 +29,7 @@ export const CreateOfertaBaseSchema = z.object({
   ubicacion:      z.string().max(200),
   experienciaMin: z.number().int().min(0).max(30).optional(),
   habilidadesReq: z.array(z.string()).max(20),
+  documentosRequeridos: z.array(z.string()).optional(),
   cierraAt:       z.string().datetime().optional(),
   estado:         z.nativeEnum(EstadoOferta).optional(),
 });

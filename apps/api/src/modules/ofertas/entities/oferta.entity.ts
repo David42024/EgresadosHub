@@ -48,6 +48,9 @@ export class Oferta {
   @Column({ name: 'habilidades_req', type: 'jsonb', default: [] })
   habilidadesReq!: string[];
 
+  @Column({ name: 'documentos_requeridos', type: 'jsonb', default: ['CV Base'] })
+  documentosRequeridos!: string[];
+
   @Column({ type: 'enum', enum: EstadoOferta, default: EstadoOferta.BORRADOR })
   estado!: EstadoOferta;
 

@@ -7,7 +7,7 @@ import { join } from 'path';
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('dotenv').config();
-} catch (error) {
+} catch {
   // Silencioso: en producción dotenv se ignora
 }
 

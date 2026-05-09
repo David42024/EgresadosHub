@@ -108,58 +108,26 @@ export function ReportesPanel() {
     onError: () => setGenerating(null),
   });
 
-  // Polling solo para jobs pendientes/procesando
-  const pendingJob = activeJobs.find(
-    j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO',
-  );
+  const [downloadedJobs, setDownloadedJobs] = useState<Set<string>>(new Set());
 
-  const { data: jobStatus } = (trpc as any).reportes.estado.useQuery(
-    { jobId: pendingJob?.jobId ?? '' },
-    {
-      enabled:         pendingJob !== undefined,
-      refetchInterval: 3_000,
-    },
+  // Polling del historial completo para actualizar estados de todos los jobs simultáneamente
+  const { data: historyJobs, refetch: refetchHistory } = (trpc as any).reportes.listar.useQuery(
+    { limit: 10 },
+    { 
+      refetchInterval: activeJobs.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO') ? 3000 : false,
+      refetchOnWindowFocus: true
+    }
   ) as any;
 
-  // Fetch initial history
-  const { data: historyJobs } = (trpc as any).reportes.listar.useQuery(
-    { limit: 5 },
-    { refetchOnWindowFocus: false }
-  );
-
+  // Sincronizar jobs del historial con el estado local
   useEffect(() => {
-    if (historyJobs && activeJobs.length === 0) {
+    if (historyJobs) {
       setActiveJobs(historyJobs.map((j: any) => ({
         ...j,
         pdfDisponible: j.estado === 'COMPLETADO',
       })));
     }
   }, [historyJobs]);
-
-  // ✅ Actualizar el job en la lista cuando cambia el estado
-  useEffect(() => {
-    if (jobStatus === null || jobStatus === undefined) return;
-
-    setActiveJobs((prev) =>
-      prev.map((j): JobStatus =>
-        j.jobId === jobStatus.jobId
-          ? {
-              ...j,
-              estado:        jobStatus.estado,
-              error:         jobStatus.error  ?? undefined,
-              pdfDisponible: jobStatus.pdfDisponible ?? false,
-              creadoAt:      new Date().toISOString(),
-            }
-          : j,
-      ),
-    );
-  }, [jobStatus]);
-
-  const handleGenerar = (tipo: string, _isAsync: boolean) => {
-    setGenerating(tipo);
-    // ✅ Siempre usamos asincrono: true para evitar timeouts en el proxy tRPC al usar Puppeteer
-    generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
-  };
 
   const utils = (trpc as any).useUtils();
 
@@ -180,6 +148,25 @@ export function ReportesPanel() {
       setDownloading(null);
     }
   }, [utils]);
+
+  // ✅ Auto-descarga inmediata al detectar estado COMPLETADO
+  useEffect(() => {
+    const newlyCompleted = activeJobs.find(
+      j => j.estado === 'COMPLETADO' && j.pdfDisponible && !downloadedJobs.has(j.jobId)
+    );
+
+    if (newlyCompleted) {
+      setDownloadedJobs(prev => new Set(prev).add(newlyCompleted.jobId));
+      void handleDescargarJob(newlyCompleted.jobId);
+    }
+  }, [activeJobs, downloadedJobs, handleDescargarJob]);
+
+
+  const handleGenerar = (tipo: string, _isAsync: boolean) => {
+    setGenerating(tipo);
+    // ✅ Siempre asíncrono para evitar timeouts
+    generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
+  };
 
   return (
     <Card className="shadow-sm dark:border-gray-800">

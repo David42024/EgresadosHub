@@ -115,8 +115,8 @@ export class PostulacionesService {
     }
 
     const [rows, total] = await qb
-      .offset(skip)
-      .limit(limit)
+      .skip(skip)
+      .take(limit)
       .addOrderBy('p.id', 'ASC')
       .getManyAndCount();
       

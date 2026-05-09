@@ -77,6 +77,14 @@ export default function EditarOfertaPage() {
     salarioMin: z.number().min(1, "Obligatorio"),
     salarioMax: z.number().min(1, "Obligatorio"),
     habilidadesReq: z.array(z.any()).min(1, "Añade al menos una habilidad"),
+    cierraAt: z.string().optional().refine(val => {
+      if (!val) return true;
+      const date = new Date(val);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date >= today;
+    }, "La fecha límite no puede ser en el pasado"),
+    documentosRequeridos: z.array(z.any()).optional(),
   });
 
   const { register, control, trigger, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
@@ -88,7 +96,9 @@ export default function EditarOfertaPage() {
       ubicacion: '',
       salarioMin: 1,
       salarioMax: 1,
-      habilidadesReq: []
+      habilidadesReq: [],
+      documentosRequeridos: [],
+      cierraAt: '',
     }
   });
 
@@ -101,7 +111,9 @@ export default function EditarOfertaPage() {
         ubicacion: oferta.ubicacion,
         salarioMin: Number(oferta.salarioMin),
         salarioMax: Number(oferta.salarioMax),
-        habilidadesReq: oferta.habilidadesReq?.map((h: string) => ({ nombre: h })) || []
+        habilidadesReq: oferta.habilidadesReq?.map((h: string) => ({ nombre: h })) || [],
+        documentosRequeridos: oferta.documentosRequeridos?.map((d: string) => ({ nombre: d })) || [{ nombre: 'CV Base' }],
+        cierraAt: oferta.cierraAt ? new Date(oferta.cierraAt).toISOString().split('T')[0] : '',
       });
     }
   }, [oferta, reset]);
@@ -112,15 +124,17 @@ export default function EditarOfertaPage() {
   });
   const [newSkill, setNewSkill] = useState('');
 
+  const { fields: docFields, append: appendDoc, remove: removeDoc } = useFieldArray({
+    control,
+    name: "documentosRequeridos" as never,
+  });
+  const [newDocReq, setNewDocReq] = useState('');
+
   const addSkill = () => {
     const trimmed = newSkill.trim();
     if (trimmed) {
       if (skillFields.some((f: any) => f.nombre.toLowerCase() === trimmed.toLowerCase())) {
-        toast({ 
-          title: "Habilidad duplicada", 
-          description: "Esta habilidad ya ha sido añadida a la lista.",
-          variant: "destructive" 
-        });
+        toast({ title: "Habilidad duplicada", description: "Ya ha sido añadida.", variant: "destructive" });
       } else {
         appendSkill({ nombre: trimmed } as any);
         setNewSkill('');
@@ -128,12 +142,31 @@ export default function EditarOfertaPage() {
     }
   };
 
+  const addDoc = () => {
+    const trimmed = newDocReq.trim();
+    if (trimmed) {
+      if (docFields.some((f: any) => f.nombre.toLowerCase() === trimmed.toLowerCase())) {
+        toast({ title: "Documento duplicado", description: "Ya requerido.", variant: "destructive" });
+      } else {
+        appendDoc({ nombre: trimmed } as any);
+        setNewDocReq('');
+      }
+    }
+  };
+
   const handleFinalSubmit = (data: any) => {
+    let cierraAtIso = undefined;
+    if (data.cierraAt) {
+      cierraAtIso = new Date(data.cierraAt).toISOString();
+    }
+
     const payload = {
       id,
       data: {
         ...data,
-        habilidadesReq: data.habilidadesReq?.map((h: any) => h.nombre || h) || []
+        habilidadesReq: data.habilidadesReq?.map((h: any) => h.nombre || h) || [],
+        documentosRequeridos: data.documentosRequeridos?.map((d: any) => d.nombre || d) || [],
+        cierraAt: cierraAtIso
       }
     };
     updateMutation.mutate(payload);
@@ -217,17 +250,30 @@ export default function EditarOfertaPage() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Ubicación</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
-                      <Input {...register("ubicacion")} className="pl-10 h-12 bg-bg-base/30 border-border rounded-xl font-bold" />
-                    </div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Fecha Límite (Postulación)</label>
+                    <Input 
+                      type="date" 
+                      {...register("cierraAt")} 
+                      className={cn(
+                        "h-12 bg-bg-base/30 border-border rounded-xl font-bold",
+                        errors.cierraAt && "border-red-500 focus:ring-red-500"
+                      )} 
+                    />
+                    {errors.cierraAt && <p className="text-[10px] text-red-500 font-bold uppercase">{errors.cierraAt.message as string}</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Ubicación</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                    <Input {...register("ubicacion")} className="pl-10 h-12 bg-bg-base/30 border-border rounded-xl font-bold" />
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-end">
-                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Descripción</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-text-muted">Descripción del Puesto</label>
                     <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", watch("descripcion").length >= 50 ? "text-success border-success/20 bg-success/5" : "text-amber-500 border-amber-500/20 bg-amber-500/5")}>
                       {watch("descripcion").length} / 50 caracteres mín.
                     </span>
@@ -245,52 +291,61 @@ export default function EditarOfertaPage() {
 
             {step === 2 && (
               <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <h4 className="text-lg font-bold text-text-primary">Requisitos Técnicos</h4>
-                    <p className="text-xs text-text-muted font-medium">Añade o elimina las habilidades requeridas.</p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold text-text-primary">Habilidades Requeridas</h4>
+                      <p className="text-xs text-text-muted font-medium">Añade tags técnicos para que los egresados te encuentren.</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
                       <Input 
-                        placeholder="Nueva habilidad..." 
-                        className="h-12 pl-10 rounded-xl border-border bg-bg-base/30 font-bold"
+                        placeholder="Ej. React, SQL, Java..." 
+                        className="h-12 rounded-xl border-border bg-bg-base/30 font-bold"
                         value={newSkill}
                         onChange={(e) => setNewSkill(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addSkill();
-                          }
-                        }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill(); } }}
                       />
+                      <Button type="button" onClick={addSkill} variant="secondary" className="h-12 px-6 rounded-xl font-bold">Añadir</Button>
                     </div>
-                    <Button type="button" onClick={addSkill} variant="secondary" className="h-12 px-6 rounded-xl font-bold">
-                      Añadir
-                    </Button>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {skillFields.map((field, index) => (
+                        <Badge key={field.id} variant="outline" className="pl-3 pr-1.5 py-1.5 gap-2 text-xs font-bold border-border bg-bg-base/50">
+                          {(field as any).nombre}
+                          <button type="button" onClick={() => removeSkill(index)} className="hover:text-red-500 transition-colors"><Trash2 className="h-3 w-3" /></button>
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <AnimatePresence mode="popLayout">
-                      {skillFields.map((field, index) => (
-                        <motion.div
-                          key={field.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          layout
-                        >
-                          <Badge variant="outline" className="pl-3 pr-1.5 py-1.5 gap-2 text-xs font-bold border-border bg-bg-base/50 text-text-primary hover:bg-bg-base transition-colors">
-                            {(field as any).nombre}
-                            <button type="button" onClick={() => removeSkill(index)} className="h-5 w-5 rounded-md flex items-center justify-center hover:bg-error/10 hover:text-error transition-colors">
-                              <Trash2 className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        </motion.div>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold text-text-primary">Documentos a Subir</h4>
+                      <p className="text-xs text-text-muted font-medium">Define qué archivos debe adjuntar el egresado.</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Ej. Certificado de Inglés, Portafolio..." 
+                        className="h-12 rounded-xl border-border bg-bg-base/30 font-bold"
+                        value={newDocReq}
+                        onChange={(e) => setNewDocReq(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDoc(); } }}
+                      />
+                      <Button type="button" onClick={addDoc} variant="secondary" className="h-12 px-6 rounded-xl font-bold">Añadir</Button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {docFields.map((field, index) => (
+                        <Badge key={field.id} variant="outline" className="pl-3 pr-1.5 py-1.5 gap-2 text-xs font-bold border-primary-500/30 bg-primary-500/5 text-primary-600">
+                          {(field as any).nombre}
+                          {(field as any).nombre !== 'CV Base' && (
+                            <button type="button" onClick={() => removeDoc(index)} className="hover:text-red-500 transition-colors"><Trash2 className="h-3 w-3" /></button>
+                          )}
+                        </Badge>
                       ))}
-                    </AnimatePresence>
+                    </div>
                   </div>
                 </div>
 

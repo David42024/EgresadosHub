@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Briefcase, 
-  MapPin, 
-  DollarSign, 
+import {
+  Briefcase,
+  MapPin,
+  DollarSign,
   ChevronLeft,
   Building2,
   Calendar,
@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { UploadDropzone } from '@/lib/uploadthing';
+import { cn } from '@/lib/utils';
 
 export default function PublicOfertaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -142,8 +143,8 @@ export default function PublicOfertaDetailPage() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <Link 
-          href="/ofertas" 
+        <Link
+          href="/ofertas"
           className="inline-flex items-center text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-6 group"
         >
           <ChevronLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
@@ -188,7 +189,7 @@ export default function PublicOfertaDetailPage() {
                 <div className="text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
                   {oferta.descripcion}
                 </div>
-                
+
                 {oferta.requisitos && oferta.requisitos.length > 0 && (
                   <>
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4">Requisitos</h3>
@@ -212,34 +213,25 @@ export default function PublicOfertaDetailPage() {
               <h3 className="font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
                 Resumen de la oferta
               </h3>
-              
+
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" /> Modalidad
+                    <Calendar className="h-4 w-4" /> Fecha Límite
                   </span>
-                  <Badge variant="outline" className="font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800">
-                    {oferta.modalidad}
+                  <Badge variant="outline" className={cn(
+                    "font-black border-none",
+                    oferta.cierraAt && new Date(oferta.cierraAt) < new Date() ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
+                  )}>
+                    {oferta.cierraAt ? new Date(oferta.cierraAt).toLocaleDateString() : 'Sin límite'}
                   </Badge>
-                </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" /> Salario
-                  </span>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {oferta.salarioMin ? (
-                      `S/ ${oferta.salarioMin.toLocaleString()} - ${oferta.salarioMax?.toLocaleString()}`
-                    ) : (
-                      'No especificado'
-                    )}
-                  </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-500 dark:text-slate-400 flex items-center gap-2">
                     <Users className="h-4 w-4" /> Postulantes
                   </span>
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {((oferta as unknown) as { _count?: { postulaciones: number } })._count?.postulaciones || 0} postulantes
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {Number(oferta.totalPostulaciones || 0)} postulantes
                   </span>
                 </div>
               </div>
@@ -247,49 +239,64 @@ export default function PublicOfertaDetailPage() {
               <div className="space-y-3">
                 {!user ? (
                   <>
-                    <Link href={`/auth/login?redirect=/ofertas/${id}`} className="inline-flex items-center justify-center w-full h-12 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 text-lg rounded-md shadow-md shadow-blue-100 dark:shadow-none transition-colors font-medium">
+                    <Link href={`/auth/login?redirect=/ofertas/${id}`} className="inline-flex items-center justify-center w-full h-12 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 text-lg rounded-xl shadow-lg shadow-blue-500/20 transition-all font-bold">
                       Postular ahora
                     </Link>
-                    <p className="text-xs text-center text-slate-400 dark:text-slate-500">
-                      Requiere iniciar sesión como Egresado
+                    <p className="text-[10px] text-center text-slate-400 uppercase font-bold tracking-widest">
+                      Requiere cuenta de Egresado
                     </p>
                   </>
                 ) : user.role === 'EGRESADO' ? (
                   yaPostulado ? (
-                    <Button disabled className="w-full h-12 text-lg font-medium opacity-50 cursor-not-allowed">
+                    <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-slate-100 text-slate-400 border-none">
                       Ya estás postulado
+                    </Button>
+                  ) : (oferta.cierraAt && new Date(oferta.cierraAt) < new Date()) ? (
+                    <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-red-50 text-red-400 border-none">
+                      Convocatoria Cerrada
                     </Button>
                   ) : (
                     <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
                       <ModalTrigger asChild>
-                        <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium">
+                        <Button className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-xl shadow-lg shadow-blue-500/20">
                           Postular ahora
                         </Button>
                       </ModalTrigger>
-                      <ModalContent>
-                        <ModalHeader>
-                          <ModalTitle>Postular a {oferta.titulo}</ModalTitle>
-                          <ModalDescription>
-                            Envía tu postulación. Puedes incluir una carta de presentación opcional.
+                      <ModalContent className="max-w-2xl rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
+                          <ModalTitle className="text-2xl font-black">Postular a {oferta.titulo}</ModalTitle>
+                          <ModalDescription className="text-blue-100 font-medium">
+                            Completa los requisitos solicitados por la empresa para continuar.
                           </ModalDescription>
-                        </ModalHeader>
-                        <div className="py-4 space-y-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Carta de presentación (Opcional)
+                        </div>
+
+                        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+                          <div className="space-y-3">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                              <Target className="h-4 w-4" /> Carta de Presentación
                             </label>
-                            <Textarea 
-                              placeholder="Destaca por qué eres el candidato ideal..."
-                              rows={3}
+                            <Textarea
+                              placeholder="Escribe un breve mensaje para el reclutador..."
+                              className="min-h-[120px] rounded-2xl border-slate-200 bg-slate-50/50 focus:ring-blue-500 transition-all font-medium"
                               value={carta}
                               onChange={(e) => setCarta(e.target.value)}
                             />
                           </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              Documentos Adjuntos (CV, Certificados, etc.)
-                            </label>
+
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-end">
+                              <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <Briefcase className="h-4 w-4" /> Documentos Requeridos
+                              </label>
+                              <div className="flex gap-1">
+                                {oferta.documentosRequeridos?.map((doc: string) => (
+                                  <Badge key={doc} variant="outline" className="text-[9px] font-black uppercase bg-blue-50 text-blue-600 border-blue-200">
+                                    {doc}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+
                             <UploadDropzone
                               endpoint="documentUploader"
                               onClientUploadComplete={(res) => {
@@ -304,36 +311,42 @@ export default function PublicOfertaDetailPage() {
                               onUploadError={(error: Error) => {
                                 toast({ variant: 'destructive', title: 'Error al subir', description: error.message });
                               }}
-                              className="ut-button:bg-blue-600 ut-button:ut-readying:bg-blue-600/50 ut-label:text-blue-600 ut-button:ut-uploading:bg-blue-600/50 ut-button:ut-uploading:after:bg-blue-600"
+                              className="ut-button:bg-blue-600 ut-label:text-blue-600 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 hover:bg-slate-100 transition-colors"
                             />
+
                             {documentos.length > 0 && (
-                              <ul className="mt-3 space-y-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                                 {documentos.map((doc, i) => (
-                                  <li key={i} className="flex items-center justify-between p-2 text-sm bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
-                                    <span className="truncate max-w-[200px] text-slate-700 dark:text-slate-300 font-medium" title={doc.nombre}>{doc.nombre}</span>
-                                    <button 
-                                      type="button" 
+                                  <div key={i} className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 shadow-sm animate-in fade-in zoom-in duration-300">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                                        <Briefcase className="h-4 w-4 text-blue-600" />
+                                      </div>
+                                      <span className="truncate text-xs font-bold text-slate-700" title={doc.nombre}>{doc.nombre}</span>
+                                    </div>
+                                    <button
+                                      type="button"
                                       onClick={() => setDocumentos(documentos.filter((_, idx) => idx !== i))}
-                                      className="text-red-500 hover:text-red-700 font-bold px-2"
+                                      className="h-6 w-6 rounded-md hover:bg-red-50 text-red-400 hover:text-red-600 transition-all"
                                     >
                                       ✕
                                     </button>
-                                  </li>
+                                  </div>
                                 ))}
-                              </ul>
+                              </div>
                             )}
                           </div>
                         </div>
-                        <ModalFooter>
-                          <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                        <ModalFooter className="p-8 bg-slate-50 border-t border-slate-100">
+                          <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold">
                             Cancelar
                           </Button>
-                          <Button 
-                            disabled={postularMutation.isPending} 
+                          <Button
+                            disabled={postularMutation.isPending || documentos.length === 0}
                             onClick={handlePostular}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 rounded-xl shadow-lg shadow-blue-500/20"
                           >
-                            {postularMutation.isPending ? 'Enviando...' : 'Enviar postulación'}
+                            {postularMutation.isPending ? 'Enviando...' : 'Confirmar Postulación'}
                           </Button>
                         </ModalFooter>
                       </ModalContent>
@@ -341,7 +354,7 @@ export default function PublicOfertaDetailPage() {
                   )
                 ) : (
                   <p className="text-sm text-center text-red-500 font-medium">
-                    Solo los egresados pueden postular a ofertas.
+                    Solo los egresados pueden postular.
                   </p>
                 )}
               </div>

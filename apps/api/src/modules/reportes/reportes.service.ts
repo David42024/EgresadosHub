@@ -117,6 +117,11 @@ export class ReportesService {
   ): Promise<{ base64: string; filename: string }> {
     let browser: puppeteer.Browser | null = null;
     try {
+      this.logger.log(`Iniciando generación de PDF para job ${jobId}...`);
+      
+      // Marcar como PROCESANDO al iniciar
+      await this.jobRepo.update(jobId, { estado: 'PROCESANDO' });
+
       // Obtener datos según tipo de reporte
       const data = await this.obtenerDatos(dto.tipo, dto.filtros);
 
@@ -138,18 +143,24 @@ export class ReportesService {
       // Generar PDF con Puppeteer
       const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
 
+      this.logger.log(`Lanzando Puppeteer para job ${jobId}...`);
       browser = await puppeteer.launch({
         headless: true,
         executablePath: chromePath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
       });
+      
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      // Timeout defensivo de 30 segundos
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
 
+      this.logger.log(`Generando buffer PDF para job ${jobId}...`);
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
         margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' },
+        timeout: 30000,
       });
 
       // Convertir a base64 en memoria (sin escribir a disco)
