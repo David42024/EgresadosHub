@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { trpc } from '@/lib/trpc/client';
+import { descargarBase64ComoPdf } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,7 +82,6 @@ export default function AdminEmpresasPage() {
                toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera el reporte..." });
                const res = await (trpc as any).reportes.generar.mutateAsync({ tipo: 'LISTADO_EMPRESAS', formato: 'PDF' });
                if (res.base64) {
-                 const { descargarBase64ComoPdf } = require('@/lib/utils');
                  descargarBase64ComoPdf(res.base64, res.filename || 'empresas.pdf');
                  toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
                }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc/client';
+import { descargarBase64ComoPdf } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,7 +119,6 @@ export default function AdminEgresadosPage() {
     onSuccess: (data: any) => {
       setDownloadingPdf(false);
       if (data.base64) {
-        const { descargarBase64ComoPdf } = require('@/lib/utils');
         descargarBase64ComoPdf(data.base64, data.filename || 'egresados.pdf');
         toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
       }
