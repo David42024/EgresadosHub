@@ -127,7 +127,15 @@ export class OfertasService implements OnModuleInit {
   }
 
   async findOne(id: string): Promise<Oferta> {
-    const o = await this.repo.findOne({ where: { id }, relations: ['empresa', 'empresa.user'] });
+    const o = await this.repo.createQueryBuilder('o')
+      .leftJoinAndSelect('o.empresa', 'emp')
+      .leftJoinAndSelect('emp.user', 'empUser')
+      .leftJoinAndSelect('o.postulaciones', 'p')
+      .leftJoinAndSelect('p.egresado', 'eg')
+      .leftJoinAndSelect('eg.user', 'egUser')
+      .loadRelationCountAndMap('o.totalPostulaciones', 'o.postulaciones')
+      .where('o.id = :id', { id })
+      .getOne();
     if (o === null || o === undefined) throw new NotFoundException(`Oferta ${id} no encontrada`);
     return o;
   }

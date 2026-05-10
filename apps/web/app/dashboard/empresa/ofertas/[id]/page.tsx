@@ -209,11 +209,36 @@ export default function OfertaDetailsPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="p-12 text-center border-2 border-dashed border-border rounded-[2rem] bg-bg-base/30">
-                <Users className="h-12 w-12 text-text-muted mx-auto mb-4 opacity-20" />
-                <p className="text-text-secondary font-bold">No hay postulaciones registradas todavía.</p>
-                <p className="text-xs text-text-muted mt-1">Las nuevas postulaciones aparecerán aquí automáticamente.</p>
-              </div>
+              {oferta.postulaciones && oferta.postulaciones.length > 0 ? (
+                <div className="space-y-3">
+                  {oferta.postulaciones.slice(0, 5).map((p: any) => (
+                    <div key={p.id} className="flex items-center gap-4 p-4 rounded-2xl bg-bg-base/50 border border-border/50 hover:bg-bg-base transition-colors">
+                      <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 font-black text-sm">
+                        {p.egresado?.nombres?.[0] || '?'}{p.egresado?.apellidos?.[0] || ''}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-text-primary truncate">
+                          {p.egresado?.nombres} {p.egresado?.apellidos}
+                        </p>
+                        <p className="text-xs text-text-muted">{p.egresado?.carrera}</p>
+                      </div>
+                      <Badge variant={
+                        p.estado === 'CONTRATADO' ? 'success' : 
+                        p.estado === 'RECHAZADO' ? 'error' : 
+                        p.estado === 'ENTREVISTA' ? 'info' : 'secondary'
+                      } className="text-[10px] font-bold uppercase">
+                        {p.estado}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center border-2 border-dashed border-border rounded-[2rem] bg-bg-base/30">
+                  <Users className="h-12 w-12 text-text-muted mx-auto mb-4 opacity-20" />
+                  <p className="text-text-secondary font-bold">No hay postulaciones registradas todavía.</p>
+                  <p className="text-xs text-text-muted mt-1">Las nuevas postulaciones aparecerán aquí automáticamente.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

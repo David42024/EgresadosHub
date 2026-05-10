@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { trpc } from '@/lib/trpc/client';
-import { descargarBase64ComoPdf } from '@/lib/utils';
+import { descargarBase64ComoPdf, cn } from '@/lib/utils';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -103,13 +103,18 @@ export default function AdminEmpresasPage() {
             Reporte PDF
           </Button>
           <Button 
-            variant="primary" 
+            variant={verificada === 'PENDING' ? 'secondary' : 'primary'}
             size="sm"
-            className="gap-2 shadow-lg shadow-primary-500/20 font-bold rounded-xl h-10 px-4"
-            onClick={() => setVerificada('PENDING')}
+            className={cn(
+              "gap-2 font-bold rounded-xl h-10 px-4",
+              verificada === 'PENDING' 
+                ? "bg-amber-100 text-amber-700 hover:bg-amber-200 border-none"
+                : "shadow-lg shadow-primary-500/20"
+            )}
+            onClick={() => setVerificada(v => v === 'PENDING' ? 'ALL' : 'PENDING')}
           >
             <ShieldAlert className="h-4 w-4" />
-            Pendientes
+            {verificada === 'PENDING' ? 'Ver Todas' : 'Pendientes'}
           </Button>
         </div>
       </PageHeader>

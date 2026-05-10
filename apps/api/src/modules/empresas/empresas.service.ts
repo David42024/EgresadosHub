@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
 import { Empresa } from './entities/empresa.entity';
 import { PaginatedResult, CreateEmpresaDto } from '@repo/trpc-contract';
@@ -11,6 +12,7 @@ export class EmpresasService {
   constructor(
     @InjectRepository(Empresa)
     private readonly repo: Repository<Empresa>,
+    private readonly events: EventEmitter2,
   ) {}
 
   async findAll(filter: { cursor?: string; limit?: number; skip?: number; sector?: string; verificada?: boolean, search?: string; }): Promise<PaginatedResult<Empresa>> {
@@ -123,7 +125,9 @@ export class EmpresasService {
       ...dto,
       logoUrl: dto.logoUrl || 'https://res.cloudinary.com/dra8rje99/image/upload/v1777703567/default.png'
     }) as unknown as Empresa;
-    return await this.repo.save(e) as unknown as Promise<Empresa>;
+    const saved = await this.repo.save(e) as unknown as Empresa;
+    void this.events.emit('empresa.creada', saved);
+    return saved;
   }
 
   async update(id: string, userId: string, dto: Partial<CreateEmpresaDto>, isAdmin = false): Promise<Empresa> {
@@ -136,7 +140,9 @@ export class EmpresasService {
   async verificar(id: string): Promise<Empresa> {
     const e = await this.findOne(id);
     e.verificada = true;
-    return this.repo.save(e);
+    const saved = await this.repo.save(e);
+    void this.events.emit('empresa.verificada', saved);
+    return saved;
   }
 
   async getPublicProfile(id: string) {

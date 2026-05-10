@@ -161,9 +161,72 @@ export class NotificacionesService {
     }
   }
 
-  @OnEvent('oferta.publicada')
-  async onOfertaPublicada(_oferta: unknown) {
-    // En producción: notificar a egresados con match de habilidades
-    // intencional
+  @OnEvent('oferta.creada')
+  async onOfertaCreada(oferta: any) {
+    if (!oferta.empresaId) return;
+    const emp = await this.repo.manager.query(`SELECT user_id FROM empresas WHERE id = $1`, [oferta.empresaId]);
+    if (emp && emp.length > 0 && emp[0].user_id) {
+      await this.crear({
+        userId: emp[0].user_id,
+        tipo: TipoNotificacion.SISTEMA,
+        mensaje: `Tu oferta "${oferta.titulo}" ha sido creada exitosamente.`,
+        metadata: { ofertaId: oferta.id },
+      });
+    }
+  }
+
+  @OnEvent('empresa.verificada')
+  async onEmpresaVerificada(empresa: any) {
+    if (!empresa.userId) return;
+    await this.crear({
+      userId: empresa.userId,
+      tipo: TipoNotificacion.SISTEMA,
+      mensaje: `¡Felicidades! Tu empresa "${empresa.razonSocial}" ha sido verificada y aprobada.`,
+      metadata: { empresaId: empresa.id },
+    });
+  }
+
+  @OnEvent('postulacion.creada')
+  async onPostulacionCreada(postulacion: any) {
+    // Notify Empresa
+    const res = await this.repo.manager.query(`
+      SELECT e.user_id, o.titulo 
+      FROM ofertas o 
+      JOIN empresas e ON o.empresa_id = e.id 
+      WHERE o.id = $1
+    `, [postulacion.ofertaId]);
+    
+    if (res && res.length > 0 && res[0].user_id) {
+      await this.crear({
+        userId: res[0].user_id,
+        tipo: TipoNotificacion.NUEVA_POSTULACION,
+        mensaje: `Has recibido una nueva postulación para la oferta "${res[0].titulo}".`,
+        metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
+      });
+    }
+
+    // Notify Egresado
+    const eg = await this.repo.manager.query(`SELECT user_id FROM egresados WHERE id = $1`, [postulacion.egresadoId]);
+    if (eg && eg.length > 0 && eg[0].user_id) {
+      await this.crear({
+        userId: eg[0].user_id,
+        tipo: TipoNotificacion.SISTEMA,
+        mensaje: `Te has postulado exitosamente a la oferta "${res?.[0]?.titulo || '...' }".`,
+        metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
+      });
+    }
+  }
+
+  @OnEvent('empresa.creada')
+  async onEmpresaCreada(empresa: any) {
+    const admins = await this.repo.manager.query(`SELECT id FROM users WHERE role = 'ADMIN'`);
+    for (const admin of admins) {
+      await this.crear({
+        userId: admin.id,
+        tipo: TipoNotificacion.SISTEMA,
+        mensaje: `Nueva empresa registrada: "${empresa.razonSocial}". Requiere verificación.`,
+        metadata: { empresaId: empresa.id },
+      });
+    }
   }
 }
