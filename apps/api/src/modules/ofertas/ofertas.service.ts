@@ -55,6 +55,16 @@ export class OfertasService implements OnModuleInit {
     console.error(`!!! [SERVICE DEBUG] filter.skip=${filter.skip}, skip variable=${skip}`);
     console.log(`\n>>> [DEBUG] OfertasService.findAll`);
     console.log(`    - Params: limit=${limit}, skip=${skip}, search=${filter.search}`);
+
+    // Auto-cerrar las ofertas cuya fecha límite ya ha expirado
+    await this.repo.createQueryBuilder()
+      .update()
+      .set({ estado: EstadoOferta.CERRADA })
+      .where('estado = :activa AND cierraAt < :hoy', { 
+        activa: EstadoOferta.ACTIVA, 
+        hoy: new Date() 
+      })
+      .execute();
     
     const qb = this.repo.createQueryBuilder('o')
       .leftJoinAndSelect('o.empresa', 'emp')

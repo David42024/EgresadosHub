@@ -29,6 +29,25 @@ export function formatDate(date: string | Date): string {
   }).format(new Date(date));
 }
 
+/** Formatea tiempo relativo (ej. Hace 2 días) */
+export function getRelativeTime(date: string | Date | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  const diffMs = Date.now() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return 'Hoy';
+  if (diffDays === 0) return 'Hoy';
+  if (diffDays === 1) return 'Ayer';
+  if (diffDays < 30) return `Hace ${diffDays} días`;
+  
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `Hace ${diffMonths} mes${diffMonths > 1 ? 'es' : ''}`;
+  
+  return `Hace ${Math.floor(diffMonths / 12)} año${Math.floor(diffMonths / 12) > 1 ? 's' : ''}`;
+}
+
 /**
  * Parsea una fecha límite de forma segura, evitando el bug de zona horaria.
  * - Si es un string date-only "YYYY-MM-DD" → parsea en hora local (noon) para evitar el -1 día UTC.

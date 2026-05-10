@@ -21,7 +21,7 @@ import {
   FileText,
   CheckCircle2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getRelativeTime } from '@/lib/utils';
 import { trpc } from '@/lib/trpc/client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -284,7 +284,7 @@ export default function EgresadoOfertasPage() {
                           <DollarSign className="h-3 w-3" /> {oferta.salarioMin ? `S/ ${oferta.salarioMin}+` : 'Negociable'}
                         </Badge>
                         <Badge variant="secondary" className="bg-bg-elevated text-text-secondary gap-1 border-none">
-                          <Clock className="h-3 w-3" /> 2 días
+                          <Clock className="h-3 w-3" /> {getRelativeTime(oferta.creadoAt)}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
