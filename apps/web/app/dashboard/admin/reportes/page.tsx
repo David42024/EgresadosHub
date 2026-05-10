@@ -85,15 +85,8 @@ export default function AdminReportesPage() {
   ) as any;
 
   const generarMutation = (trpc as any).reportes.generar.useMutation({
-    onSuccess: () => {
-      toast({ title: "Reporte solicitado", description: "El reporte se está generando en segundo plano." });
-      setTimeout(() => refetchJobs(), 2000);
-    },
-    onSettled: () => {
-      setGenerating(null);
-    },
     onError: (error: any) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      toast({ variant: "destructive", title: "Error al generar", description: error.message || "Error desconocido" });
       setGenerating(null);
     }
   }) as any;

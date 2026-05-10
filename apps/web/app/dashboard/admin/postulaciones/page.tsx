@@ -52,11 +52,12 @@ import {
   PauseCircle,
   Users
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, descargarBase64ComoPdf } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatsCard } from '@/components/shared/StatsCard';
 import Link from 'next/link';
+import { toast } from '@/components/ui/use-toast';
 
 type Postulacion = {
   id: string;
@@ -91,6 +92,7 @@ export default function AdminPostulacionesPage() {
   const [selectedPostulacion, setSelectedPostulacion] = useState<Postulacion | null>(null);
   const [tableEstadoFilter, setTableEstadoFilter] = useState<string>('ALL');
   const [page, setPage] = useState(1);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const PAGE_SIZE = 10;
 
   const { data: ofertas } = (trpc as any).ofertas.list.useQuery({ limit: 100 }) as any;
@@ -162,6 +164,26 @@ export default function AdminPostulacionesPage() {
     }
   };
 
+  const generarReporte = (trpc as any).reportes.generar.useMutation({
+    onSuccess: (data: any) => {
+      setDownloadingPdf(false);
+      if (data.base64) {
+        descargarBase64ComoPdf(data.base64, data.filename || 'postulaciones.pdf');
+        toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
+      }
+    },
+    onError: () => {
+      setDownloadingPdf(false);
+      toast({ title: "Error", description: "No se pudo generar el reporte.", variant: "destructive" });
+    }
+  }) as any;
+
+  const handleExportPDF = () => {
+    setDownloadingPdf(true);
+    toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera..." });
+    generarReporte.mutate({ tipo: 'HISTORIAL_POSTULACIONES', formato: 'PDF' });
+  };
+
   useEffect(() => {
     setPage(1);
   }, [selectedOferta, tableEstadoFilter]);
@@ -173,6 +195,10 @@ export default function AdminPostulacionesPage() {
         description="Seguimiento y administración de procesos de selección."
       >
         <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl font-bold h-10 px-4" onClick={handleExportPDF} disabled={downloadingPdf}>
+            <Download className="h-4 w-4" />
+            Reporte PDF
+          </Button>
           <Select value={selectedOferta} onValueChange={setSelectedOferta}>
             <SelectTrigger className="w-[320px] bg-surface rounded-2xl border-none shadow-lg h-12 font-bold px-6">
               <Briefcase className="h-5 w-5 mr-3 text-primary-600" />

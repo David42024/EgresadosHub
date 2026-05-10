@@ -32,6 +32,7 @@ export default function AdminEmpresasPage() {
   const [search, setSearch] = useState('');
   const [sector, setSector] = useState<string>('ALL');
   const [verificada, setVerificada] = useState<string>('ALL');
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   
   const debouncedSearch = useDebounce(search, 300);
 
@@ -66,6 +67,26 @@ export default function AdminEmpresasPage() {
 
   const { data: statsData, isLoading: isLoadingStats } = (trpc as any).analytics.getEmpresasStatsAdmin.useQuery() as any;
 
+  const generarReporte = (trpc as any).reportes.generar.useMutation({
+    onSuccess: (data: any) => {
+      setDownloadingPdf(false);
+      if (data.base64) {
+        descargarBase64ComoPdf(data.base64, data.filename || 'empresas.pdf');
+        toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
+      }
+    },
+    onError: () => {
+      setDownloadingPdf(false);
+      toast({ title: "Error", description: "No se pudo generar el reporte.", variant: "destructive" });
+    }
+  }) as any;
+
+  const handleExportPDF = () => {
+    setDownloadingPdf(true);
+    toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera..." });
+    generarReporte.mutate({ tipo: 'LISTADO_EMPRESAS', formato: 'PDF' });
+  };
+
   const empresas = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -77,18 +98,7 @@ export default function AdminEmpresasPage() {
         description="Gestiona las empresas que publican ofertas en la plataforma."
       >
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2 rounded-xl font-bold h-10 px-4" onClick={async () => {
-             try {
-               toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera el reporte..." });
-               const res = await (trpc as any).reportes.generar.mutateAsync({ tipo: 'LISTADO_EMPRESAS', formato: 'PDF' });
-               if (res.base64) {
-                 descargarBase64ComoPdf(res.base64, res.filename || 'empresas.pdf');
-                 toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
-               }
-             } catch (e) {
-               toast({ title: "Error", description: "No se pudo generar el reporte.", variant: "destructive" });
-             }
-          }}>
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl font-bold h-10 px-4" onClick={handleExportPDF} disabled={downloadingPdf}>
             <Download className="h-4 w-4" />
             Reporte PDF
           </Button>

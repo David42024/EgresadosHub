@@ -147,20 +147,28 @@ export class ReportesService {
       browser = await puppeteer.launch({
         headless: true,
         executablePath: chromePath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--single-process',
+          '--disable-gpu',
+          '--disable-extensions',
+          '--no-zygote',
+        ],
       });
       
       const page = await browser.newPage();
       
-      // Timeout defensivo de 30 segundos
-      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+      // Usar 'domcontentloaded' en lugar de 'networkidle0' — nuestros templates son HTML estático sin red
+      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
       this.logger.log(`Generando buffer PDF para job ${jobId}...`);
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
         margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' },
-        timeout: 30000,
+        timeout: 15000,
       });
 
       // Convertir a base64 en memoria (sin escribir a disco)
@@ -257,6 +265,7 @@ export class ReportesService {
       'EMPLEABILIDAD_COHORTE': this.getEmpleabilidadTemplate(),
       'DEMANDA_LABORAL': this.getDemandaTemplate(),
       'LISTADO_EGRESADOS': this.getEgresadosTemplate(),
+      'LISTADO_EMPRESAS': this.getGenericTemplate('LISTADO_EMPRESAS'),
       'LISTADO_OFERTAS': this.getOfertasTemplate(),
       'HISTORIAL_POSTULACIONES': this.getPostulacionesTemplate(),
     };
