@@ -11,8 +11,12 @@ describe('EmpresasService', () => {
     save: vi.fn(),
   };
 
+  const mockEvents = {
+    emit: vi.fn(),
+  };
+
   beforeEach(() => {
-    service = new EmpresasService(mockRepo as any);
+    service = new EmpresasService(mockRepo as any, mockEvents as any);
     vi.clearAllMocks();
   });
 
