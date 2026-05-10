@@ -78,8 +78,13 @@ export default function AdminEmpresasPage() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2 rounded-xl font-bold h-10 px-4" onClick={async () => {
              try {
-               const res = await (trpc as any).reportes.generar.mutateAsync({ tipo: 'LISTADO_EMPRESAS', formato: 'PDF', asincrono: false });
-               if (res.url) window.open(res.url, '_blank');
+               toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera el reporte..." });
+               const res = await (trpc as any).reportes.generar.mutateAsync({ tipo: 'LISTADO_EMPRESAS', formato: 'PDF' });
+               if (res.base64) {
+                 const { descargarBase64ComoPdf } = require('@/lib/utils');
+                 descargarBase64ComoPdf(res.base64, res.filename || 'empresas.pdf');
+                 toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
+               }
              } catch (e) {
                toast({ title: "Error", description: "No se pudo generar el reporte.", variant: "destructive" });
              }

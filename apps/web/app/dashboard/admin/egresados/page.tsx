@@ -113,21 +113,28 @@ export default function AdminEgresadosPage() {
     toast({ title: "Exportación exitosa", description: "El archivo CSV ha sido generado." });
   };
 
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const generarReporte = (trpc as any).reportes.generar.useMutation({
     onSuccess: (data: any) => {
-      toast({ title: "Generando PDF", description: "El reporte se está procesando en segundo plano." });
-      // Aquí podrías redirigir al panel de reportes para ver el progreso
+      setDownloadingPdf(false);
+      if (data.base64) {
+        const { descargarBase64ComoPdf } = require('@/lib/utils');
+        descargarBase64ComoPdf(data.base64, data.filename || 'egresados.pdf');
+        toast({ title: "Reporte listo", description: "El PDF se ha descargado." });
+      }
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo iniciar la generación del PDF.", variant: "destructive" });
+      setDownloadingPdf(false);
+      toast({ title: "Error", description: "No se pudo generar el PDF.", variant: "destructive" });
     }
   });
 
   const handleExportPDF = () => {
+    setDownloadingPdf(true);
+    toast({ title: "Generando PDF", description: "Espera unos segundos mientras se genera..." });
     generarReporte.mutate({
       tipo: 'LISTADO_EGRESADOS',
       formato: 'PDF',
-      asincrono: true, // ✅ Siempre asincrono para evitar timeouts
       filtros: {
         search: debouncedSearch,
         carrera: carrera === 'ALL' ? undefined : carrera,

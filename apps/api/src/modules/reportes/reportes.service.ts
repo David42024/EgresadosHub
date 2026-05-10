@@ -200,9 +200,12 @@ export class ReportesService {
           distribucion: await this.analyticsService.getDistribucionCarrera(),
         };
       case 'DEMANDA_LABORAL':
+        const meses = filtros && typeof filtros === 'object' && 'meses' in filtros ? Number(filtros.meses) : 12;
         return {
           habilidades: await this.analyticsService.getDemandaHabilidades(50),
-          evolucion: await this.analyticsService.getEvolucionMensual(12),
+          evolucion: await this.analyticsService.getEvolucionMensual(meses),
+          kpis: await this.analyticsService.getAdminKpis(),
+          meses,
         };
       case 'LISTADO_EGRESADOS':
         return this.dataSource.query(`
@@ -395,23 +398,49 @@ export class ReportesService {
 </head>
 <body>
   <div class="header">
-    <h1>📈 Análisis de Demanda Laboral</h1>
-    <p>Generado el {{generadoEn}} | Sistema de Egresados UNT</p>
+    <h1>📈 Análisis de Demanda Laboral y Mercado</h1>
+    <p>Generado el {{generadoEn}} | Periodo de análisis: Últimos {{data.meses}} meses | Sistema de Egresados UNT</p>
   </div>
   <div class="container">
-    <div class="kpi-grid">
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
       <div class="kpi-card teal">
-        <div class="kpi-label">Habilidades Analizadas</div>
-        <div class="kpi-value number">{{data.habilidades.length}}</div>
+        <div class="kpi-label">Tasa de Empleabilidad</div>
+        <div class="kpi-value number">{{data.kpis.tasaEmpleabilidadGlobal}}%</div>
       </div>
       <div class="kpi-card orange">
-        <div class="kpi-label">Mayor Brecha</div>
-        <div class="kpi-value number">{{#with (lookup data.habilidades 0)}}{{brecha}}{{/with}}</div>
+        <div class="kpi-label">Salario Promedio</div>
+        <div class="kpi-value number">S/ {{data.kpis.salarioPromedioGlobal}}</div>
       </div>
       <div class="kpi-card red">
-        <div class="kpi-label">Demanda Total</div>
-        <div class="kpi-value number">{{#each data.habilidades}}{{#if @first}}{{totalOfertas}}{{/if}}{{/each}}</div>
+        <div class="kpi-label">Ofertas Activas</div>
+        <div class="kpi-value number">{{data.kpis.totalOfertasActivas}}</div>
       </div>
+      <div class="kpi-card" style="border-color: #3b82f6;">
+        <div class="kpi-label">Empresas Registradas</div>
+        <div class="kpi-value number">{{data.kpis.totalEmpresas}}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Flujo Mensual (Últimos {{data.meses}} meses)</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th style="text-align:center">Ofertas Publicadas</th>
+            <th style="text-align:center">Postulaciones Recibidas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each data.evolucion}}
+          <tr>
+            <td><strong>{{mes}}</strong></td>
+            <td style="text-align:center" class="number">{{ofertas}}</td>
+            <td style="text-align:center" class="number">{{postulaciones}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
     </div>
 
     <div class="section">

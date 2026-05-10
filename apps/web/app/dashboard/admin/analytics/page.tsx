@@ -99,11 +99,11 @@ export default function AdminAnalyticsPage() {
 
   const handleDownload = () => {
     generarReporte.mutate(
-      { tipo: 'DEMANDA_LABORAL', formato: 'PDF', asincrono: true },
+      { tipo: 'DEMANDA_LABORAL', formato: 'PDF', filtros: { meses } },
       {
         onSuccess: (data: any) => {
           setDownloadingJobId(data.jobId);
-          toast({ title: 'Generando reporte...', description: 'Se descargará automáticamente cuando esté listo.' });
+          toast({ title: 'Generando reporte...', description: 'El reporte se está procesando y se descargará en unos segundos.' });
         },
         onError: () => {
           toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar la generación del reporte.' });
