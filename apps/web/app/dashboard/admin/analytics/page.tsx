@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { StatsCard } from '@/components/shared/StatsCard';
 import { trpc } from '@/lib/trpc/client';
 import { toast } from '@/components/ui/use-toast';
+import { cn, descargarBase64ComoPdf } from '@/lib/utils';
 import {
   XAxis,
   YAxis,
@@ -59,7 +60,7 @@ export default function AdminAnalyticsPage() {
 
   const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
   const { data: jobStatus } = (trpc as any).reportes.estado.useQuery(
-    { jobId: downloadingJobId! },
+    { jobId: downloadingJobId || '' },
     { enabled: !!downloadingJobId, refetchInterval: (query: any) => query?.state?.data?.estado === 'COMPLETADO' ? false : 2000 }
   ) as any;
 
@@ -69,20 +70,7 @@ export default function AdminAnalyticsPage() {
       (trpc as any).reportes.descargar.query({ jobId: downloadingJobId })
         .then((result: any) => {
           if (result?.base64) {
-            const byteChars = atob(result.base64);
-            const byteNumbers = new Array(byteChars.length);
-            for (let i = 0; i < byteChars.length; i++) {
-              byteNumbers[i] = byteChars.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/pdf' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = result.filename || 'reporte.pdf';
-            document.body.appendChild(link);
-            link.click();
-            setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 100);
+            descargarBase64ComoPdf(result.base64, result.filename || 'reporte.pdf');
           }
           setDownloadingJobId(null);
           toast({ title: 'Reporte listo', description: 'El PDF se ha descargado correctamente.' });
@@ -95,18 +83,26 @@ export default function AdminAnalyticsPage() {
       setDownloadingJobId(null);
       toast({ variant: 'destructive', title: 'Error', description: jobStatus.error || 'Falló la generación del reporte.' });
     }
-  }, [jobStatus]);
+  }, [jobStatus, downloadingJobId]);
 
   const handleDownload = () => {
+    toast({ title: 'Generando PDF', description: 'Espera unos segundos mientras se procesa el reporte...' });
     generarReporte.mutate(
       { tipo: 'DEMANDA_LABORAL', formato: 'PDF', filtros: { meses } },
       {
         onSuccess: (data: any) => {
-          setDownloadingJobId(data.jobId);
-          toast({ title: 'Generando reporte...', description: 'El reporte se está procesando y se descargará en unos segundos.' });
+          if (data.base64) {
+            // Caso síncrono: Descargar inmediatamente
+            descargarBase64ComoPdf(data.base64, data.filename || 'reporte_analytics.pdf');
+            toast({ title: 'Reporte listo', description: 'El PDF se ha descargado correctamente.' });
+          } else if (data.jobId) {
+            // Caso asíncrono (respaldo): Iniciar polling
+            setDownloadingJobId(data.jobId);
+          }
         },
-        onError: () => {
-          toast({ variant: 'destructive', title: 'Error', description: 'No se pudo iniciar la generación del reporte.' });
+        onError: (err: any) => {
+          console.error('Error generando reporte:', err);
+          toast({ variant: 'destructive', title: 'Error', description: 'No se pudo generar el reporte. Verifica tu conexión.' });
         },
       }
     );
@@ -183,6 +179,8 @@ export default function AdminAnalyticsPage() {
           <CardContent className="h-[350px]">
             {evolucionLoading ? (
               <Skeleton className="w-full h-full" />
+            ) : !evolucion || evolucion.length === 0 ? (
+              <div className="w-full h-full flex items-center justify-center text-text-muted">No hay datos históricos disponibles</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={evolucion}>

@@ -100,7 +100,23 @@ export default function AdminReportesPage() {
 
   const handleGenerate = (type: string) => {
     setGenerating(type);
-    generarMutation.mutate({ tipo: type, formato: 'PDF' });
+    toast({ title: "Iniciando generación", description: "El reporte se está procesando..." });
+    generarMutation.mutate(
+      { tipo: type, formato: 'PDF' },
+      {
+        onSuccess: (data: any) => {
+          if (data.base64) {
+            descargarBase64ComoPdf(data.base64, data.filename || `${type}.pdf`);
+            toast({ title: "Descarga iniciada", description: "El reporte se ha generado correctamente." });
+            // Refrescar lista para ver el nuevo job completado
+            setTimeout(() => refetchJobs(), 1000);
+          } else {
+            toast({ title: "Reporte solicitado", description: "El reporte se está generando en segundo plano." });
+          }
+        },
+        onSettled: () => setGenerating(null)
+      }
+    );
   };
 
   const handleDownload = async (jobId: string, tipo: string) => {

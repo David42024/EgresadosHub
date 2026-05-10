@@ -215,7 +215,14 @@ export class ReportesService {
           FROM egresados eg JOIN users u ON u.id = eg.user_id
           WHERE u.is_active = true ORDER BY eg.apellidos, eg.nombres
           LIMIT 1000
-        `) as Promise<RawEgresadoReporte[]>;
+        `);
+      case 'LISTADO_EMPRESAS':
+        return this.dataSource.query(`
+          SELECT razon_social, ruc, sector, ubicacion, verificada
+          FROM empresas
+          ORDER BY razon_social ASC
+          LIMIT 1000
+        `);
       case 'LISTADO_OFERTAS':
         return this.dataSource.query(`
           SELECT o.titulo, e.razon_social as empresa, o.modalidad, o.estado,
@@ -238,6 +245,8 @@ export class ReportesService {
           ORDER BY p.postulado_at DESC
           LIMIT 1000
         `);
+      case 'COMPARATIVO_CARRERAS':
+        return this.analyticsService.getDistribucionCarrera();
       default:
         return {};
     }

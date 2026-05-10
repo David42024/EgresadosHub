@@ -5,7 +5,18 @@
 
 BEGIN;
 
--- ─── 0. Limpieza de datos (Opcional, comentar si se prefiere mantener) ──────
+-- ─── 0.1. Actualización de Esquema (Nuevas columnas) ──────────────────────────
+ALTER TABLE reportes_jobs ADD COLUMN IF NOT EXISTS pdf_base64 TEXT;
+ALTER TABLE postulaciones ADD COLUMN IF NOT EXISTS documentos jsonb DEFAULT '[]';
+ALTER TABLE ofertas ADD COLUMN IF NOT EXISTS documentos_requeridos jsonb DEFAULT '["CV Base"]';
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ofertas' AND column_name='cierra_at') THEN
+        ALTER TABLE ofertas ADD COLUMN cierra_at timestamptz;
+    END IF;
+END $$;
+
+-- ─── 0.2. Limpieza de datos ──────────────────────────────────────────────────
 TRUNCATE users, egresados, empresas, ofertas, postulaciones, postulacion_audit, notificaciones CASCADE;
 
 -- ─── 1. Usuarios (Password: Test1234!) ──────────────────────────────────────

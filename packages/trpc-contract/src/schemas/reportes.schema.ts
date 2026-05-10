@@ -5,6 +5,7 @@ import { AnalyticsFilterSchema } from './analytics.schema';
 
 export const TipoReporteSchema = z.enum([
   'LISTADO_EGRESADOS',
+  'LISTADO_EMPRESAS',
   'LISTADO_OFERTAS',
   'HISTORIAL_POSTULACIONES',
   'EMPLEABILIDAD_COHORTE',
