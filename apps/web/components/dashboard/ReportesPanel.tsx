@@ -190,7 +190,7 @@ export function ReportesPanel() {
   /* ────── Handler generar ────── */
   const handleGenerar = (tipo: string) => {
     setGenerating(tipo);
-    generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
+    generarMutation.mutate({ tipo, formato: 'PDF' });
   };
 
   return (
