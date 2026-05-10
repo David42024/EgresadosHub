@@ -199,7 +199,7 @@ export class ReportesService {
           cohortes: await this.analyticsService.getAdminKpis(filtros),
           distribucion: await this.analyticsService.getDistribucionCarrera(),
         };
-      case 'DEMANDA_LABORAL':
+      case 'DEMANDA_LABORAL': {
         const meses = filtros && typeof filtros === 'object' && 'meses' in filtros ? Number(filtros.meses) : 12;
         return {
           habilidades: await this.analyticsService.getDemandaHabilidades(50),
@@ -207,6 +207,7 @@ export class ReportesService {
           kpis: await this.analyticsService.getAdminKpis(),
           meses,
         };
+      }
       case 'LISTADO_EGRESADOS':
         return this.dataSource.query(`
           SELECT eg.nombres, eg.apellidos, eg.carrera, eg.anio_egreso,
