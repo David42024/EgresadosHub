@@ -4,6 +4,7 @@ import { trpc }                from '@/lib/trpc/client';
 import { Button }              from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge }               from '@/components/ui/badge';
+import { descargarBase64ComoPdf } from '@/lib/utils';
 import { FileText, Download, Loader2, CheckCircle2, Clock } from 'lucide-react';
 
 const TIPOS_REPORTE: {
@@ -52,31 +53,7 @@ interface JobStatus {
   pdfDisponible?: boolean;    // ← indica si el PDF está listo para descarga
 }
 
-/**
- * Convierte un string base64 a un Blob PDF y dispara la descarga en el navegador.
- */
-function descargarBase64ComoPdf(base64: string, filename: string) {
-  const byteChars = atob(base64);
-  const byteNumbers = new Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) {
-    byteNumbers[i] = byteChars.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
 
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-
-  // Limpiar después de la descarga
-  setTimeout(() => {
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, 100);
-}
 
 export function ReportesPanel() {
   const [activeJobs,  setActiveJobs]  = useState<JobStatus[]>([]);

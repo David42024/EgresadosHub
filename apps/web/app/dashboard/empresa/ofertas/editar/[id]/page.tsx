@@ -79,9 +79,8 @@ export default function EditarOfertaPage() {
     habilidadesReq: z.array(z.any()).min(1, "Añade al menos una habilidad"),
     cierraAt: z.string().optional().refine(val => {
       if (!val) return true;
-      const date = new Date(val);
+      const date = new Date(`${val}T23:59:59`);
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
       return date >= today;
     }, "La fecha límite no puede ser en el pasado"),
     documentosRequeridos: z.array(z.any()).optional(),
@@ -113,7 +112,10 @@ export default function EditarOfertaPage() {
         salarioMax: Number(oferta.salarioMax),
         habilidadesReq: oferta.habilidadesReq?.map((h: string) => ({ nombre: h })) || [],
         documentosRequeridos: oferta.documentosRequeridos?.map((d: string) => ({ nombre: d })) || [{ nombre: 'CV Base' }],
-        cierraAt: oferta.cierraAt ? new Date(oferta.cierraAt).toISOString().split('T')[0] : '',
+        cierraAt: oferta.cierraAt ? (() => {
+          const d = new Date(oferta.cierraAt);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })() : '',
       });
     }
   }, [oferta, reset]);
@@ -157,7 +159,7 @@ export default function EditarOfertaPage() {
   const handleFinalSubmit = (data: any) => {
     let cierraAtIso = undefined;
     if (data.cierraAt) {
-      cierraAtIso = new Date(data.cierraAt).toISOString();
+      cierraAtIso = new Date(`${data.cierraAt}T23:59:59`).toISOString();
     }
 
     const payload = {

@@ -82,9 +82,8 @@ export default function NuevaOfertaPage() {
     habilidadesReq: z.array(z.any()).min(1, "Añade al menos una"),
     cierraAt: z.string().optional().refine(val => {
       if (!val) return true;
-      const date = new Date(val);
+      const date = new Date(`${val}T23:59:59`);
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
       return date >= today;
     }, "La fecha límite no puede ser en el pasado"),
     documentosRequeridos: z.array(z.any()).optional(),
@@ -144,7 +143,7 @@ export default function NuevaOfertaPage() {
   const handleFinalSubmit = (data: any) => {
     let cierraAtIso = undefined;
     if (data.cierraAt) {
-      cierraAtIso = new Date(data.cierraAt).toISOString();
+      cierraAtIso = new Date(`${data.cierraAt}T23:59:59`).toISOString();
     }
 
     const payload = {

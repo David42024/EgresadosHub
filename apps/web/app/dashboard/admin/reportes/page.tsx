@@ -18,7 +18,7 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, descargarBase64ComoPdf } from '@/lib/utils';
 import { trpc } from '@/lib/trpc/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -68,8 +68,21 @@ const TIPO_LABELS: Record<string, string> = {
 
 export default function AdminReportesPage() {
   const [generating, setGenerating] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const utils = (trpc as any).useUtils();
 
-  const { data: jobs, isLoading: jobsLoading, refetch: refetchJobs } = (trpc as any).reportes.listar.useQuery({ limit: 20 }) as any;
+  const { data: jobs, isLoading: jobsLoading, refetch: refetchJobs } = (trpc as any).reportes.listar.useQuery(
+    { limit: 20 },
+    {
+      refetchInterval: (query: any) => {
+        const data = query?.state?.data ?? (Array.isArray(query) ? query : []);
+        const currentJobs: any[] = Array.isArray(data) ? data : [];
+        const pending = currentJobs.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO');
+        return pending ? 2000 : false;
+      },
+      refetchOnWindowFocus: true,
+    }
+  ) as any;
 
   const generarMutation = (trpc as any).reportes.generar.useMutation({
     onSuccess: () => {
@@ -90,8 +103,20 @@ export default function AdminReportesPage() {
     generarMutation.mutate({ tipo: type, formato: 'PDF' });
   };
 
-  const handleDownload = (url: string) => {
-    window.open(url, '_blank');
+  const handleDownload = async (jobId: string, tipo: string) => {
+    setDownloading(jobId);
+    try {
+      const result = await (utils as any).reportes.descargar.fetch({ jobId });
+      if (result?.base64) {
+        descargarBase64ComoPdf(result.base64, result.filename || `${tipo}_${jobId}.pdf`);
+      } else {
+        toast({ variant: "destructive", title: "Error", description: "El PDF no se pudo descargar." });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message || "Error al descargar" });
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const pendingJobs = (jobs ?? []).filter((j: any) => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO');
@@ -224,10 +249,10 @@ export default function AdminReportesPage() {
                     variant="ghost" 
                     size="icon" 
                     className="h-9 w-9 text-text-muted hover:text-primary-600 dark:hover:text-primary-400"
-                    onClick={() => job.url && handleDownload(job.url)}
-                    disabled={!job.url}
+                    onClick={() => void handleDownload(job.jobId, job.tipo)}
+                    disabled={downloading === job.jobId}
                   >
-                    <Download className="h-4 w-4" />
+                    {downloading === job.jobId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   </Button>
                 </div>
               ))}
