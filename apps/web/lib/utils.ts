@@ -29,6 +29,24 @@ export function formatDate(date: string | Date): string {
   }).format(new Date(date));
 }
 
+/**
+ * Parsea una fecha límite de forma segura, evitando el bug de zona horaria.
+ * - Si es un string date-only "YYYY-MM-DD" → parsea en hora local (noon) para evitar el -1 día UTC.
+ * - Si ya es un ISO timestamp completo o un Date → lo usa directamente.
+ * Retorna null si el valor está vacío o es inválido.
+ */
+export function parseFechaLimite(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  // Detectar si es solo "YYYY-MM-DD" (sin hora)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day, 12, 0, 0); // noon local para evitar UTC offset
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /** Calcula la variación porcentual entre dos valores */
 export function calcVariacion(actual: number, anterior: number): {
   valor: number;

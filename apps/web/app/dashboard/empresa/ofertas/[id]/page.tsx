@@ -25,7 +25,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { toast } from '@/components/ui/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, parseFechaLimite } from '@/lib/utils';
 
 export default function OfertaDetailsPage() {
   const { id } = useParams() as { id: string };
@@ -153,9 +153,9 @@ export default function OfertaDetailsPage() {
                         <span className="text-sm font-bold text-text-muted">Fecha Límite:</span>
                         <Badge variant="outline" className={cn(
                           "font-black border-none",
-                          oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date() ? "bg-red-500/10 text-red-600" : "bg-primary-600/10 text-primary-600"
+                          parseFechaLimite(oferta.cierraAt) && parseFechaLimite(oferta.cierraAt)! < new Date() ? "bg-red-500/10 text-red-600" : "bg-primary-600/10 text-primary-600"
                         )}>
-                          {oferta.cierraAt ? new Date(oferta.cierraAt + 'T12:00:00').toLocaleDateString() : 'Sin fecha límite'}
+                          {parseFechaLimite(oferta.cierraAt)?.toLocaleDateString() ?? 'Sin fecha límite'}
                         </Badge>
                       </div>
                     </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { trpc }                from '@/lib/trpc/client';
 import { Button }              from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -79,92 +79,119 @@ function descargarBase64ComoPdf(base64: string, filename: string) {
 }
 
 export function ReportesPanel() {
-  const [activeJobs, setActiveJobs] = useState<JobStatus[]>([]);
-  const [generating, setGenerating] = useState<string | null>(null);
+  const [activeJobs,  setActiveJobs]  = useState<JobStatus[]>([]);
+  const [generating,  setGenerating]  = useState<string | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
 
-  const generarMutation = (trpc as any).reportes.generar.useMutation({
-    onSuccess: (data: any, variables: any) => {
-      setGenerating(null);
-      const tipoLabel = TIPOS_REPORTE.find(t => t.tipo === variables.tipo)?.label ?? variables.tipo;
+  // hasPending drive the refetchInterval reactivamente
+  const [hasPending, setHasPending] = useState(false);
 
-      if (data.base64) {
-        // Descarga inmediata — el PDF vino en la respuesta
-        const filename = data.filename || `${variables.tipo}_reporte.pdf`;
-        descargarBase64ComoPdf(data.base64, filename);
-      } else {
-        // Job asíncrono — agregar al tracking
-        setActiveJobs((prev) => [
-          {
-            jobId:    data.jobId,
-            estado:   'PENDIENTE',
-            creadoAt: new Date().toISOString(),
-            tipo:     tipoLabel,
-          },
-          ...prev,
-        ]);
-      }
-    },
-    onError: () => setGenerating(null),
-  });
+  // IDs de jobs lanzados en ESTA sesión (para distinguir descargas nuevas de las históricas)
+  const newJobIdsRef = React.useRef<Set<string>>(new Set());
 
-  const [downloadedJobs, setDownloadedJobs] = useState<Set<string>>(new Set());
-
-  // Polling del historial completo para actualizar estados de todos los jobs simultáneamente
-  const { data: historyJobs, refetch: refetchHistory } = (trpc as any).reportes.listar.useQuery(
-    { limit: 10 },
-    { 
-      refetchInterval: activeJobs.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO') ? 3000 : false,
-      refetchOnWindowFocus: true
-    }
-  ) as any;
-
-  // Sincronizar jobs del historial con el estado local
-  useEffect(() => {
-    if (historyJobs) {
-      setActiveJobs(historyJobs.map((j: any) => ({
-        ...j,
-        pdfDisponible: j.estado === 'COMPLETADO',
-      })));
-    }
-  }, [historyJobs]);
+  // Jobs cuya descarga ya se disparó (evita doble-descarga)
+  const downloadedRef = React.useRef<Set<string>>(new Set());
 
   const utils = (trpc as any).useUtils();
 
-  /**
-   * Descarga el PDF de un job completado consultando el endpoint `descargar`.
-   */
+  /* ────── Descarga PDF ────── */
   const handleDescargarJob = useCallback(async (jobId: string) => {
+    if (downloadedRef.current.has(jobId)) return; // ya descargado
+    downloadedRef.current.add(jobId);
     setDownloading(jobId);
     try {
-      // Llamada directa al endpoint tRPC para obtener el base64 usando utils
       const result = await (utils as any).reportes.descargar.fetch({ jobId });
       if (result?.base64) {
         descargarBase64ComoPdf(result.base64, result.filename || `reporte_${jobId}.pdf`);
       }
     } catch (err) {
       console.error('Error al descargar el PDF:', err);
+      downloadedRef.current.delete(jobId); // permitir reintento manual
     } finally {
       setDownloading(null);
     }
   }, [utils]);
 
-  // ✅ Auto-descarga inmediata al detectar estado COMPLETADO
-  useEffect(() => {
-    const newlyCompleted = activeJobs.find(
-      j => j.estado === 'COMPLETADO' && j.pdfDisponible && !downloadedJobs.has(j.jobId)
-    );
+  /* ────── Mutación generar ────── */
+  const generarMutation = (trpc as any).reportes.generar.useMutation({
+    onSuccess: (data: any, variables: any) => {
+      setGenerating(null);
+      const tipoLabel = TIPOS_REPORTE.find(t => t.tipo === variables.tipo)?.label ?? variables.tipo;
 
-    if (newlyCompleted) {
-      setDownloadedJobs(prev => new Set(prev).add(newlyCompleted.jobId));
-      void handleDescargarJob(newlyCompleted.jobId);
+      if (data.base64) {
+        // Respuesta síncrona directa
+        descargarBase64ComoPdf(data.base64, data.filename || `${variables.tipo}_reporte.pdf`);
+      } else if (data.jobId) {
+        // Job asíncrono — registrar como "nuevo" y activar polling
+        newJobIdsRef.current.add(data.jobId);
+        setHasPending(true);
+        setActiveJobs(prev => [{
+          jobId:    data.jobId,
+          estado:   'PENDIENTE',
+          creadoAt: new Date().toISOString(),
+          tipo:     tipoLabel,
+        }, ...prev]);
+      }
+    },
+    onError: () => setGenerating(null),
+  });
+
+  /* ────── Polling historial ────── */
+  const { data: historyJobs } = (trpc as any).reportes.listar.useQuery(
+    { limit: 10 },
+    {
+      // refetchInterval con función para que React Query lo re-evalúe en cada tick
+      refetchInterval: (data: any) => {
+        const jobs: any[] = data ?? [];
+        const pending = jobs.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO');
+        return pending ? 2000 : false;
+      },
+      refetchOnWindowFocus: true,
     }
-  }, [activeJobs, downloadedJobs, handleDescargarJob]);
+  ) as any;
 
+  /* ────── Sincronizar historial → estado local ────── */
+  const initializedRef = React.useRef(false);
 
-  const handleGenerar = (tipo: string, _isAsync: boolean) => {
+  useEffect(() => {
+    if (!historyJobs) return;
+
+    const mapped: JobStatus[] = historyJobs.map((j: any) => ({
+      ...j,
+      pdfDisponible: j.estado === 'COMPLETADO',
+    }));
+
+    // Primera carga: marcar todos los COMPLETADO existentes como ya "descargados"
+    // para evitar auto-descarga de reportes históricos
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      historyJobs.forEach((j: any) => {
+        if (j.estado === 'COMPLETADO') downloadedRef.current.add(j.jobId);
+      });
+    }
+
+    setActiveJobs(mapped);
+
+    // Actualizar hasPending para que el intervalo funcione reactivamente
+    const stillPending = mapped.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO');
+    setHasPending(stillPending);
+
+    // Auto-descarga: solo para jobs lanzados en esta sesión que acaban de completar
+    mapped.forEach(j => {
+      if (
+        j.estado === 'COMPLETADO' &&
+        j.pdfDisponible &&
+        newJobIdsRef.current.has(j.jobId) &&
+        !downloadedRef.current.has(j.jobId)
+      ) {
+        void handleDescargarJob(j.jobId);
+      }
+    });
+  }, [historyJobs, handleDescargarJob]);
+
+  /* ────── Handler generar ────── */
+  const handleGenerar = (tipo: string) => {
     setGenerating(tipo);
-    // ✅ Siempre asíncrono para evitar timeouts
     generarMutation.mutate({ tipo, formato: 'PDF', asincrono: true });
   };
 
@@ -196,7 +223,7 @@ export function ReportesPanel() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleGenerar(r.tipo, r.async === true)}
+                onClick={() => handleGenerar(r.tipo)}
                 disabled={generating === r.tipo}
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30"
               >
@@ -241,7 +268,7 @@ export function ReportesPanel() {
 
                   {(job.estado === 'COMPLETADO' && job.pdfDisponible) ? (
                     <button
-                      onClick={() => handleDescargarJob(job.jobId)}
+                      onClick={() => { void handleDescargarJob(job.jobId); }}
                       disabled={downloading === job.jobId}
                       className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0 disabled:opacity-50"
                     >

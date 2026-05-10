@@ -27,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { UploadDropzone } from '@/lib/uploadthing';
-import { cn } from '@/lib/utils';
+import { cn, parseFechaLimite } from '@/lib/utils';
 
 export default function PublicOfertaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -233,9 +233,9 @@ export default function PublicOfertaDetailPage() {
                   </span>
                   <Badge variant="outline" className={cn(
                     "font-black border-none",
-                    oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date() ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
+                    parseFechaLimite(oferta.cierraAt) && parseFechaLimite(oferta.cierraAt)! < new Date() ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"
                   )}>
-                    {oferta.cierraAt ? new Date(oferta.cierraAt + 'T12:00:00').toLocaleDateString() : 'Sin límite'}
+                    {parseFechaLimite(oferta.cierraAt)?.toLocaleDateString() ?? 'Sin límite'}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center text-sm">
@@ -263,7 +263,7 @@ export default function PublicOfertaDetailPage() {
                     <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-slate-100 text-slate-400 border-none">
                       Ya estás postulado
                     </Button>
-                  ) : (oferta.cierraAt && new Date(oferta.cierraAt + 'T12:00:00') < new Date()) ? (
+                  ) : (oferta.cierraAt && parseFechaLimite(oferta.cierraAt)! < new Date()) ? (
                     <Button disabled className="w-full h-12 rounded-xl text-lg font-bold bg-red-50 text-red-400 border-none">
                       Convocatoria Cerrada
                     </Button>
