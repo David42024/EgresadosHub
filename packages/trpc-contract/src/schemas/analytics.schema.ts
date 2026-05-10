@@ -9,6 +9,6 @@ export const AnalyticsFilterSchema = z.object({
   anioEgreso: z.number().int().optional(),
   sector:     z.string().optional(),
   ubicacion:  z.string().optional(),
-});
+}).catchall(z.any());
 
 export type AnalyticsFilter = z.infer<typeof AnalyticsFilterSchema>;
