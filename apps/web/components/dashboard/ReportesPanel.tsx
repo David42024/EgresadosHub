@@ -160,8 +160,10 @@ export function ReportesPanel() {
     { limit: 10 },
     {
       // refetchInterval con función para que React Query lo re-evalúe en cada tick
-      refetchInterval: (data: any) => {
-        const jobs: any[] = data ?? [];
+      refetchInterval: (query: any) => {
+        // En React Query v5, el argumento es el objeto Query, y la data está en query.state.data
+        const data = query?.state?.data ?? (Array.isArray(query) ? query : []);
+        const jobs: any[] = Array.isArray(data) ? data : [];
         const pending = jobs.some(j => j.estado === 'PENDIENTE' || j.estado === 'PROCESANDO');
         return pending ? 2000 : false;
       },

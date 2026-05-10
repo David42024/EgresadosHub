@@ -60,7 +60,7 @@ export default function AdminAnalyticsPage() {
   const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
   const { data: jobStatus } = (trpc as any).reportes.estado.useQuery(
     { jobId: downloadingJobId! },
-    { enabled: !!downloadingJobId, refetchInterval: (data: any) => data?.estado === 'COMPLETADO' ? false : 2000 }
+    { enabled: !!downloadingJobId, refetchInterval: (query: any) => query?.state?.data?.estado === 'COMPLETADO' ? false : 2000 }
   ) as any;
 
   useEffect(() => {
