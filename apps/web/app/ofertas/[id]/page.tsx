@@ -282,14 +282,14 @@ export default function PublicOfertaDetailPage() {
                           </ModalDescription>
                         </div>
 
-                        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+                        <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-950">
                           <div className="space-y-3">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
                               <Target className="h-4 w-4" /> Carta de Presentación
                             </label>
                             <Textarea
                               placeholder="Escribe un breve mensaje para el reclutador..."
-                              className="min-h-[120px] rounded-2xl border-slate-200 bg-slate-50/50 focus:ring-blue-500 transition-all font-medium"
+                              className="min-h-[120px] rounded-2xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
                               value={carta}
                               onChange={(e) => setCarta(e.target.value)}
                             />
@@ -298,10 +298,10 @@ export default function PublicOfertaDetailPage() {
                           <div className="space-y-6">
                             <div className="flex items-center gap-2 mb-2">
                               <Briefcase className="h-4 w-4 text-slate-400" />
-                              <label className="text-xs font-black uppercase tracking-widest text-slate-400">
+                              <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                                 Documentos Requeridos
                               </label>
-                              <span className="ml-auto text-[10px] font-bold text-slate-400">
+                              <span className="ml-auto text-[10px] font-bold text-slate-500 dark:text-slate-400">
                                 {Object.values(documentosMap).filter(Boolean).length}/{docsRequeridos.length} subidos
                               </span>
                             </div>
@@ -311,11 +311,11 @@ export default function PublicOfertaDetailPage() {
                               return (
                                 <div key={docNombre} className="space-y-2">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                       {uploaded ? (
                                         <span className="h-4 w-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[8px]">✓</span>
                                       ) : (
-                                        <span className="h-4 w-4 rounded-full border-2 border-slate-300 inline-block" />
+                                        <span className="h-4 w-4 rounded-full border-2 border-slate-300 dark:border-slate-600 inline-block" />
                                       )}
                                       {docNombre}
                                     </span>
@@ -333,11 +333,11 @@ export default function PublicOfertaDetailPage() {
                                     )}
                                   </div>
                                   {uploaded ? (
-                                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl border border-green-200">
-                                      <div className="h-8 w-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
-                                        <Briefcase className="h-4 w-4 text-green-600" />
+                                    <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-500/10 rounded-xl border border-green-200 dark:border-green-500/20">
+                                      <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-500/20 flex items-center justify-center shrink-0">
+                                        <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
                                       </div>
-                                      <span className="truncate text-xs font-bold text-green-700" title={uploaded.nombre}>
+                                      <span className="truncate text-xs font-bold text-green-700 dark:text-green-400" title={uploaded.nombre}>
                                         {uploaded.nombre}
                                       </span>
                                     </div>
@@ -358,7 +358,7 @@ export default function PublicOfertaDetailPage() {
                                         console.error(`[Upload Error] ${docNombre}:`, error.message);
                                         toast({ variant: 'destructive', title: `Error al subir ${docNombre}`, description: error.message });
                                       }}
-                                      className="ut-button:bg-blue-600 ut-label:text-blue-600 border border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors ut-upload-icon:hidden"
+                                      className="ut-button:bg-blue-600 ut-label:text-blue-600 dark:ut-label:text-blue-400 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors ut-upload-icon:hidden"
                                     />
                                   )}
                                 </div>
@@ -366,8 +366,8 @@ export default function PublicOfertaDetailPage() {
                             })}
                           </div>
                         </div>
-                        <ModalFooter className="p-8 bg-slate-50 border-t border-slate-100">
-                          <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold">
+                        <ModalFooter className="p-8 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                          <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold dark:text-slate-300 dark:hover:bg-slate-800">
                             Cancelar
                           </Button>
                           <Button

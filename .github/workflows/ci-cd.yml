@@ -115,7 +115,18 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Deploy to DigitalOcean App Platform
+        env:
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+          UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
         run: |
+          envsubst '$CLOUDINARY_CLOUD_NAME $CLOUDINARY_API_KEY $CLOUDINARY_API_SECRET $GOOGLE_CLIENT_ID $GOOGLE_CLIENT_SECRET $GITHUB_CLIENT_ID $GITHUB_CLIENT_SECRET $UPLOADTHING_TOKEN' < .do/app.yaml > .do/app.yaml.tmp
+          mv .do/app.yaml.tmp .do/app.yaml
           doctl apps update ${{ secrets.DIGITALOCEAN_APP_ID }} --spec .do/app.yaml --wait
 
       - name: Notify deployment success
