@@ -99,6 +99,9 @@ services:
         value: http://egresados-api:8080  # Comunicación interna entre servicios
       - key: API_PREFIX
         value: api/v1  # Prefijo de la API
+      - key: UPLOADTHING_TOKEN
+        type: SECRET
+        scope: RUN_AND_BUILD_TIME
 
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:
