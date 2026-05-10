@@ -94,21 +94,40 @@ export function ReportesPanel() {
 
   const utils = (trpc as any).useUtils();
 
-  /* ────── Descarga PDF ────── */
-  const handleDescargarJob = useCallback(async (jobId: string) => {
-    if (downloadedRef.current.has(jobId)) return; // ya descargado
-    downloadedRef.current.add(jobId);
+  /* ────── Descarga PDF directa (siempre ejecuta — usada por el botón) ────── */
+  const handleDescargarManual = useCallback(async (jobId: string, filename?: string) => {
     setDownloading(jobId);
     try {
+      console.log('[Descarga manual] Solicitando PDF para job:', jobId);
+      const result = await (utils as any).reportes.descargar.fetch({ jobId });
+      if (result?.base64) {
+        descargarBase64ComoPdf(result.base64, filename || result.filename || `reporte_${jobId}.pdf`);
+        downloadedRef.current.add(jobId); // marcar como descargado tras éxito
+      } else {
+        console.warn('[Descarga manual] No se recibió base64 para job:', jobId);
+      }
+    } catch (err) {
+      console.error('[Descarga manual] Error al descargar el PDF:', err);
+    } finally {
+      setDownloading(null);
+    }
+  }, [utils]);
+
+  /* ────── Descarga PDF automática (deduplicada — usada por el polling) ────── */
+  const handleAutoDescargar = useCallback(async (jobId: string) => {
+    if (downloadedRef.current.has(jobId)) return;
+    downloadedRef.current.add(jobId);
+    try {
+      console.log('[Auto-descarga] Descargando PDF completado, job:', jobId);
       const result = await (utils as any).reportes.descargar.fetch({ jobId });
       if (result?.base64) {
         descargarBase64ComoPdf(result.base64, result.filename || `reporte_${jobId}.pdf`);
+      } else {
+        downloadedRef.current.delete(jobId); // fallback: permite reintento manual
       }
     } catch (err) {
-      console.error('Error al descargar el PDF:', err);
-      downloadedRef.current.delete(jobId); // permitir reintento manual
-    } finally {
-      setDownloading(null);
+      console.error('[Auto-descarga] Error:', err);
+      downloadedRef.current.delete(jobId);
     }
   }, [utils]);
 
@@ -184,10 +203,10 @@ export function ReportesPanel() {
         newJobIdsRef.current.has(j.jobId) &&
         !downloadedRef.current.has(j.jobId)
       ) {
-        void handleDescargarJob(j.jobId);
+        void handleAutoDescargar(j.jobId);
       }
     });
-  }, [historyJobs, handleDescargarJob]);
+  }, [historyJobs, handleAutoDescargar]);
 
   /* ────── Handler generar ────── */
   const handleGenerar = (tipo: string) => {
@@ -268,7 +287,7 @@ export function ReportesPanel() {
 
                   {(job.estado === 'COMPLETADO' && job.pdfDisponible) ? (
                     <button
-                      onClick={() => { void handleDescargarJob(job.jobId); }}
+                      onClick={() => { void handleDescargarManual(job.jobId); }}
                       disabled={downloading === job.jobId}
                       className="text-blue-600 dark:text-blue-400 font-bold hover:underline shrink-0 disabled:opacity-50"
                     >
