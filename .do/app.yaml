@@ -38,34 +38,34 @@ services:
       - key: DATABASE_URL
         value: ${egresados-db.DATABASE_URL}
       - key: JWT_SECRET
-        value: ${JWT_SECRET}
+        value: "${JWT_SECRET}"
         scope: RUN_TIME
       - key: JWT_REFRESH_SECRET
-        value: ${JWT_REFRESH_SECRET}
+        value: "${JWT_REFRESH_SECRET}"
         scope: RUN_TIME
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080
       - key: CORS_ORIGIN
         value: ${egresados-web.PUBLIC_URL}  # URL pública del frontend
       - key: CLOUDINARY_CLOUD_NAME
-        value: ${CLOUDINARY_CLOUD_NAME}
+        value: "${CLOUDINARY_CLOUD_NAME}"
         type: SECRET
         scope: RUN_TIME
       - key: CLOUDINARY_API_KEY
-        value: ${CLOUDINARY_API_KEY}
+        value: "${CLOUDINARY_API_KEY}"
         type: SECRET
         scope: RUN_TIME
       - key: CLOUDINARY_API_SECRET
-        value: ${CLOUDINARY_API_SECRET}
+        value: "${CLOUDINARY_API_SECRET}"
         type: SECRET
         scope: RUN_TIME
       # ─── OAuth Google (configure in Dashboard) ─────────────────────────────
       - key: GOOGLE_CLIENT_ID
-        value: ${GOOGLE_CLIENT_ID}
+        value: "${GOOGLE_CLIENT_ID}"
         type: SECRET
         scope: RUN_TIME
       - key: GOOGLE_CLIENT_SECRET
-        value: ${GOOGLE_CLIENT_SECRET}
+        value: "${GOOGLE_CLIENT_SECRET}"
         type: SECRET
         scope: RUN_TIME
       - key: GOOGLE_CALLBACK_URL
@@ -73,11 +73,11 @@ services:
         scope: RUN_TIME
       # ─── OAuth GitHub (configure in Dashboard) ─────────────────────────────
       - key: GITHUB_CLIENT_ID
-        value: ${GITHUB_CLIENT_ID}
+        value: "${GITHUB_CLIENT_ID}"
         type: SECRET
         scope: RUN_TIME
       - key: GITHUB_CLIENT_SECRET
-        value: ${GITHUB_CLIENT_SECRET}
+        value: "${GITHUB_CLIENT_SECRET}"
         type: SECRET
         scope: RUN_TIME
       - key: GITHUB_CALLBACK_URL
@@ -107,7 +107,7 @@ services:
       - key: API_PREFIX
         value: api/v1  # Prefijo de la API
       - key: UPLOADTHING_TOKEN
-        value: ${UPLOADTHING_TOKEN}
+        value: "${UPLOADTHING_TOKEN}"
         type: SECRET
         scope: RUN_AND_BUILD_TIME
 
