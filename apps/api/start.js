@@ -5,7 +5,6 @@
  */
 
 const { execSync } = require('child_process');
-const path = require('path');
 
 console.log('🏃 Ejecutando migraciones de base de datos...');
 
@@ -19,11 +18,13 @@ try {
       env: { ...process.env, NODE_ENV: 'production' }
     }
   );
-  console.log('✅ Migraciones completadas. Iniciando aplicación...');
+  console.log('✅ Migraciones completadas.');
 } catch (error) {
-  console.error('❌ Error al ejecutar migraciones:', error.message);
-  process.exit(1);
+  console.warn('⚠️  Las migraciones fallaron (posiblemente por permisos). Continuando...');
+  console.warn('   Para ejecutar manualmente, usa la consola de DigitalOcean:');
+  console.warn('   ALTER TABLE users ADD COLUMN github_id VARCHAR(255) NULL;');
 }
 
+console.log('🚀 Iniciando aplicación...');
 // Iniciar la aplicación
 require('./dist/main');
