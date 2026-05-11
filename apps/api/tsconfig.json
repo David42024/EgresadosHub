@@ -5,12 +5,16 @@
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "strict": false,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "outDir": "./dist",
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "@repo/trpc-contract": ["../../packages/trpc-contract/dist/index.js"],
       "@repo/trpc-contract/*": ["../../packages/trpc-contract/dist/*"]
