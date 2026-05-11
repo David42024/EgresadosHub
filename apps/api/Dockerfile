@@ -60,10 +60,17 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 # Copy built files
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages ./packages
+# Copy start script and source files needed for migrations
+COPY --from=builder /app/apps/api/src ./apps/api/src
+COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/
+COPY --from=builder /app/apps/api/start.sh ./apps/api/
 
 WORKDIR /app/apps/api
+
+# Make start script executable
+RUN chmod +x start.sh
 
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["node", "dist/main"]
+CMD ["./start.sh"]
