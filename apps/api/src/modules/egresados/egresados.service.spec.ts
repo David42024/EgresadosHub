@@ -12,9 +12,12 @@ describe('EgresadosService', () => {
     remove: vi.fn(),
     query: vi.fn(),
   };
+  const mockConfig = {
+    get: vi.fn().mockReturnValue('http://localhost:3001'),
+  };
 
   beforeEach(() => {
-    service = new EgresadosService(mockRepo as any);
+    service = new EgresadosService(mockRepo as any, mockConfig as any);
     vi.clearAllMocks();
   });
 

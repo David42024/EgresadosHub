@@ -3,6 +3,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Egresado } from './entities/egresado.entity';
 import {
   CreateEgresadoDto, UpdateEgresadoDto,
@@ -30,10 +31,35 @@ export interface EgresadoPublicProfile {
 
 @Injectable()
 export class EgresadosService {
+  private readonly apiInternalUrl: string;
+
   constructor(
     @InjectRepository(Egresado)
     private readonly repo: Repository<Egresado>,
-  ) { }
+    private readonly config: ConfigService,
+  ) {
+    this.apiInternalUrl = this.config.get<string>('API_INTERNAL_URL') || 'http://localhost:3001';
+  }
+
+  // Transformar URL de Cloudinary a URL local
+  private transformCvUrl(cvUrl: string | null): string | null {
+    if (!cvUrl) return null;
+    
+    // Si ya es URL local (contiene /v1777703567/curriculums/), retornarla
+    if (cvUrl.includes('/v1777703567/curriculums/')) {
+      return cvUrl;
+    }
+    
+    // Si es URL de Cloudinary, transformar a local
+    // Extraer el userId del CV (formato antiguo: https://res.cloudinary.com/.../userId.pdf)
+    const match = cvUrl.match(/([a-f0-9-]{36})\.pdf$/i);
+    if (match) {
+      const userId = match[1];
+      return `${this.apiInternalUrl}/v1777703567/curriculums/${userId}.pdf`;
+    }
+    
+    return cvUrl;
+  }
 
   // ─── CRUD ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +116,10 @@ export class EgresadosService {
   async findOne(id: string): Promise<Egresado> {
     const e = await this.repo.findOne({ where: { id }, relations: ['user'] });
     if (!e) throw new NotFoundException('Egresado no encontrado');
+    // Transformar URL del CV si es de Cloudinary
+    if (e.cvUrl) {
+      e.cvUrl = this.transformCvUrl(e.cvUrl);
+    }
     return e;
   }
 
@@ -128,7 +158,7 @@ export class EgresadosService {
       anioEgreso: e.anioEgreso,
       resumenProfesional: e.resumenProfesional,
       fotoUrl: e.fotoUrl,
-      cvUrl: e.cvUrl,
+      cvUrl: this.transformCvUrl(e.cvUrl),
       habilidades: e.habilidades || [],
       experiencias: e.experiencias || [],
       formacion: e.formacion || [],

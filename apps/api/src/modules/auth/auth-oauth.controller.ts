@@ -25,7 +25,11 @@ interface GitHubUser {
  * Controlador OAuth sin prefijo API
  * Para permitir rutas como /api/auth/google sin el prefijo /v1
  */
-@Controller('api/auth')
+// ═══════════════════════════════════════════════════════════════
+// Controlador OAuth con rutas completas sin prefijo global
+// Esto evita el prefijo api/v1 para las rutas de OAuth
+// ═══════════════════════════════════════════════════════════════
+@Controller()
 export class AuthOAuthController {
   private readonly logger = new Logger(AuthOAuthController.name);
 
@@ -36,17 +40,17 @@ export class AuthOAuthController {
     this.logger.log(`FRONTEND_URL configurado: ${this.config.get('FRONTEND_URL')}`);
   }
 
-  @Get('google')
+  @Get('api/auth/google')
   @UseGuards(AuthGuard('google'))
   googleAuth(): void {
-    this.logger.log('[GET /google] Redirigiendo a Google OAuth...');
+    this.logger.log('[GET /api/auth/google] Redirigiendo a Google OAuth...');
     // Passport maneja la redirección
   }
 
-  @Get('google/callback')
+  @Get('api/auth/google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response): Promise<void> {
-    this.logger.log('[GET /google/callback] Callback recibido de Google');
+    this.logger.log('[GET /api/auth/google/callback] Callback recibido de Google');
     const googleUser = req.user as GoogleUser;
     this.logger.log(`[Google Callback] Usuario: ${googleUser.email}`);
     
@@ -66,17 +70,17 @@ export class AuthOAuthController {
     res.redirect(`${frontendUrl}/dashboard`);
   }
 
-  @Get('github')
+  @Get('api/auth/github')
   @UseGuards(AuthGuard('github'))
   githubAuth(): void {
-    this.logger.log('[GET /github] Redirigiendo a GitHub OAuth...');
+    this.logger.log('[GET /api/auth/github] Redirigiendo a GitHub OAuth...');
     // Passport maneja la redirección
   }
 
-  @Get('github/callback')
+  @Get('api/auth/github/callback')
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() req: Request, @Res() res: Response): Promise<void> {
-    this.logger.log('[GET /github/callback] Callback recibido de GitHub');
+    this.logger.log('[GET /api/auth/github/callback] Callback recibido de GitHub');
     const githubUser = req.user as GitHubUser;
     this.logger.log(`[GitHub Callback] Usuario: ${githubUser.email}`);
     
@@ -96,7 +100,7 @@ export class AuthOAuthController {
     res.redirect(`${frontendUrl}/dashboard`);
   }
 
-  @Get('logout')
+  @Get('api/auth/logout')
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token');

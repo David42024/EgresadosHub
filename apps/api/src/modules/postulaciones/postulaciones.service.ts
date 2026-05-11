@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Postulacion, PostulacionAudit } from './entities/postulacion.entity';
 import { Egresado } from '../egresados/entities/egresado.entity';
 import { Empresa } from '../empresas/entities/empresa.entity';
@@ -17,13 +18,37 @@ export interface PostulacionesFilter {
 
 @Injectable()
 export class PostulacionesService {
+  private readonly apiInternalUrl: string;
+
   constructor(
     @InjectRepository(Postulacion)
     private readonly repo: Repository<Postulacion>,
     @InjectRepository(PostulacionAudit)
     private readonly auditRepo: Repository<PostulacionAudit>,
     private readonly events: EventEmitter2,
-  ) { }
+    private readonly config: ConfigService,
+  ) {
+    this.apiInternalUrl = this.config.get<string>('API_INTERNAL_URL') || 'http://localhost:3001';
+  }
+
+  // Transformar URL de Cloudinary a URL local
+  private transformCvUrl(cvUrl: string | null): string | null {
+    if (!cvUrl) return null;
+    
+    // Si ya es URL local (contiene /v1777703567/curriculums/), retornarla
+    if (cvUrl.includes('/v1777703567/curriculums/')) {
+      return cvUrl;
+    }
+    
+    // Si es URL de Cloudinary, transformar a local
+    const match = cvUrl.match(/([a-f0-9-]{36})\.pdf$/i);
+    if (match) {
+      const userId = match[1];
+      return `${this.apiInternalUrl}/v1777703567/curriculums/${userId}.pdf`;
+    }
+    
+    return cvUrl;
+  }
 
   async findEgresadoByUserId(userId: string) {
     const egresado = await this.repo.manager.getRepository(Egresado).findOne({ where: { userId } });
@@ -143,10 +168,10 @@ export class PostulacionesService {
     const total = await qb.getCount();
     const rows = await qb.getMany();
     
-    // Debug: verificar que cvUrl se cargó
-    rows.forEach((row, idx) => {
-      if (row.egresado) {
-        console.log(`[findByOferta] Postulación ${idx} - cvUrl:`, row.egresado.cvUrl);
+    // Transformar URLs de CV de Cloudinary a locales
+    rows.forEach((row) => {
+      if (row.egresado?.cvUrl) {
+        row.egresado.cvUrl = this.transformCvUrl(row.egresado.cvUrl);
       }
     });
     

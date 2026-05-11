@@ -30,12 +30,16 @@ describe('PostulacionesService', () => {
   const mockEvents = {
     emit: vi.fn(),
   };
+  const mockConfig = {
+    get: vi.fn().mockReturnValue('http://localhost:3001'),
+  };
 
   beforeEach(() => {
     service = new PostulacionesService(
       mockRepo as any,
       mockAuditRepo as any,
       mockEvents as any,
+      mockConfig as any,
     );
     vi.clearAllMocks();
   });

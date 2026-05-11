@@ -226,7 +226,7 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
                       <div className="flex items-center gap-2 mt-1">
                         <Clock className="h-3 w-3 text-text-muted/70" />
                         <span className="text-xs text-text-muted">
-                          {formatTimeAgo(notif.createdAt)}
+                          {formatTimeAgo(notif.creadaAt)}
                         </span>
                         {!notif.leida && (
                           <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
