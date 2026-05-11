@@ -12,6 +12,7 @@ import { PostulacionesModule } from './modules/postulaciones/postulaciones.modul
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ReportesModule } from './modules/reportes/reportes.module';
 import { NotificacionesModule } from './modules/notificaciones/notificaciones.module';
+import { NotificacionesService } from './modules/notificaciones/notificaciones.service';
 import { UploadModule } from './modules/upload/upload.module';
 import { TrpcModule } from './trpc/trpc.module';
 import { HealthModule } from './modules/health/health.module';
@@ -84,5 +85,7 @@ import { join } from 'path';
       serveRoot: '/',
     }),
   ],
+  // Forzar la instanciación del servicio de notificaciones para que los listeners de eventos se registren
+  providers: [NotificacionesService],
 })
 export class AppModule { }
