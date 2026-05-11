@@ -24,6 +24,9 @@ export class User {
   @Column({ name: 'google_id', nullable: true, unique: true })
   googleId?: string;
 
+  @Column({ name: 'github_id', nullable: true, unique: true })
+  githubId?: string;
+
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl?: string;
 

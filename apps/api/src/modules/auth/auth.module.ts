@@ -11,6 +11,7 @@ import { AuthController }  from './auth.controller';
 import { User }            from './entities/user.entity';
 import { JwtStrategy }     from './strategies/jwt.strategy';
 import { GoogleStrategy }  from './strategies/google.strategy';
+import { GitHubStrategy }  from './strategies/github.strategy';
 import { AuthRouter }      from './auth.router';
 import { EgresadosModule } from '../egresados/egresados.module';
 import { EmpresasModule }  from '../empresas/empresas.module';
@@ -33,6 +34,24 @@ const googleStrategyProvider = {
   inject: [ConfigService],
 };
 
+// Factory para GitHubStrategy - solo se crea si hay credenciales configuradas
+const githubStrategyProvider = {
+  provide: GitHubStrategy,
+  useFactory: (config: ConfigService) => {
+    const clientID = config.get<string>('GITHUB_CLIENT_ID');
+    const clientSecret = config.get<string>('GITHUB_CLIENT_SECRET');
+    const callbackURL = config.get<string>('GITHUB_CALLBACK_URL');
+
+    if (!clientID || !clientSecret || !callbackURL) {
+      Logger.warn('GitHub OAuth no configurado - se omite GitHubStrategy', 'AuthModule');
+      return null;
+    }
+
+    return new GitHubStrategy(config);
+  },
+  inject: [ConfigService],
+};
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
@@ -48,7 +67,7 @@ const googleStrategyProvider = {
     }),
   ],
   controllers: [AuthController],
-  providers:   [AuthService, JwtStrategy, googleStrategyProvider, AuthRouter],
+  providers:   [AuthService, JwtStrategy, googleStrategyProvider, githubStrategyProvider, AuthRouter],
   exports:     [AuthService, JwtModule, AuthRouter],
 })
 export class AuthModule {}

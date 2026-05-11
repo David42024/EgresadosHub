@@ -116,6 +116,40 @@ export class AuthService {
     return this.buildTokenResponse(user, googleUser.nombre);
   }
 
+  async loginWithGitHub(githubUser: {
+    providerId: string;
+    email: string;
+    name: string;
+    avatarUrl?: string;
+  }): Promise<TokenResponse> {
+    let user = await this.userRepo.findOne({
+      where: { githubId: githubUser.providerId },
+    });
+
+    if (user === null) {
+      // Buscar si ya existe por email
+      user = await this.userRepo.findOne({ where: { email: githubUser.email } });
+      if (user !== null) {
+        // Actualizar con GitHub ID
+        user.githubId = githubUser.providerId;
+        if (githubUser.avatarUrl) {
+          user.avatarUrl = githubUser.avatarUrl;
+        }
+        await this.userRepo.save(user);
+      } else {
+        // Crear nuevo usuario
+        user = await this.userRepo.save(this.userRepo.create({
+          email: githubUser.email,
+          githubId: githubUser.providerId,
+          avatarUrl: githubUser.avatarUrl,
+          role: Role.EGRESADO,
+        }));
+      }
+    }
+
+    return this.buildTokenResponse(user, githubUser.name);
+  }
+
   async validateUser(userId: string): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id: userId, isActive: true },
