@@ -343,7 +343,7 @@ export default function PublicOfertaDetailPage() {
                                     </div>
                                   ) : (
                                     <UploadDropzone
-                                      endpoint="documentUploader"
+                                      endpoint="cvUploader"
                                       onClientUploadComplete={(res) => {
                                         const file = res[0];
                                         if (!file) return;
