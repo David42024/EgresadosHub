@@ -30,7 +30,7 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: Function,
+    done: (err: Error | null, user?: unknown) => void,
   ) {
     this.logger.log(`GitHub OAuth validate - profile ID: ${profile?.id}`);
 

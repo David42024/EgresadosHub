@@ -11,15 +11,6 @@ import { TipoReporte } from '@repo/trpc-contract';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ReporteJob } from './entities/reporte-job.entity';
 
-interface RawEgresadoReporte {
-  nombres: string;
-  apellidos: string;
-  carrera: string;
-  anio_egreso: number;
-  ubicacion: string | null;
-  email: string;
-}
-
 @Injectable()
 export class ReportesService {
   private readonly logger = new Logger(ReportesService.name);
