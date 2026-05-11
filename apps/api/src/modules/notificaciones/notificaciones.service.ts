@@ -186,34 +186,52 @@ export class NotificacionesService {
     });
   }
 
-  @OnEvent('postulacion.creada')
+  @OnEvent('postulacion.creada', { async: true })
   async onPostulacionCreada(postulacion: any) {
-    // Notify Empresa
-    const res = await this.repo.manager.query(`
-      SELECT e.user_id, o.titulo 
-      FROM ofertas o 
-      JOIN empresas e ON o.empresa_id = e.id 
-      WHERE o.id = $1
-    `, [postulacion.ofertaId]);
+    this.logger.log(`[onPostulacionCreada] Evento recibido para postulacion: ${postulacion.id}`);
     
-    if (res && res.length > 0 && res[0].user_id) {
-      await this.crear({
-        userId: res[0].user_id,
-        tipo: TipoNotificacion.NUEVA_POSTULACION,
-        mensaje: `Has recibido una nueva postulación para la oferta "${res[0].titulo}".`,
-        metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
-      });
-    }
+    try {
+      // Notify Empresa
+      const res = await this.repo.manager.query(`
+        SELECT e.user_id, o.titulo, e.razon_social
+        FROM ofertas o 
+        JOIN empresas e ON o.empresa_id = e.id 
+        WHERE o.id = $1
+      `, [postulacion.ofertaId]);
+      
+      this.logger.log(`[onPostulacionCreada] Query empresa result: ${JSON.stringify(res)}`);
+      
+      if (res && res.length > 0 && res[0].user_id) {
+        this.logger.log(`[onPostulacionCreada] Creando notificación para empresa user: ${res[0].user_id}`);
+        await this.crear({
+          userId: res[0].user_id,
+          tipo: TipoNotificacion.NUEVA_POSTULACION,
+          mensaje: `Has recibido una nueva postulación para la oferta "${res[0].titulo}".`,
+          metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
+        });
+        this.logger.log(`[onPostulacionCreada] Notificación creada exitosamente para empresa`);
+      } else {
+        this.logger.warn(`[onPostulacionCreada] No se encontró empresa para oferta: ${postulacion.ofertaId}`);
+      }
 
-    // Notify Egresado
-    const eg = await this.repo.manager.query(`SELECT user_id FROM egresados WHERE id = $1`, [postulacion.egresadoId]);
-    if (eg && eg.length > 0 && eg[0].user_id) {
-      await this.crear({
-        userId: eg[0].user_id,
-        tipo: TipoNotificacion.SISTEMA,
-        mensaje: `Te has postulado exitosamente a la oferta "${res?.[0]?.titulo || '...' }".`,
-        metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
-      });
+      // Notify Egresado
+      const eg = await this.repo.manager.query(`SELECT user_id FROM egresados WHERE id = $1`, [postulacion.egresadoId]);
+      this.logger.log(`[onPostulacionCreada] Query egresado result: ${JSON.stringify(eg)}`);
+      
+      if (eg && eg.length > 0 && eg[0].user_id) {
+        this.logger.log(`[onPostulacionCreada] Creando notificación para egresado user: ${eg[0].user_id}`);
+        await this.crear({
+          userId: eg[0].user_id,
+          tipo: TipoNotificacion.SISTEMA,
+          mensaje: `Te has postulado exitosamente a la oferta "${res?.[0]?.titulo || '...' }".`,
+          metadata: { postulacionId: postulacion.id, ofertaId: postulacion.ofertaId },
+        });
+        this.logger.log(`[onPostulacionCreada] Notificación creada exitosamente para egresado`);
+      } else {
+        this.logger.warn(`[onPostulacionCreada] No se encontró egresado: ${postulacion.egresadoId}`);
+      }
+    } catch (error) {
+      this.logger.error(`[onPostulacionCreada] Error creando notificaciones:`, error);
     }
   }
 
