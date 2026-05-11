@@ -124,6 +124,126 @@ export default function EgresadoPerfilEmpresaPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* CV Section */}
+          <Card variant="elevated" className="border-none shadow-xl bg-surface/60 backdrop-blur-md overflow-hidden rounded-3xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-text-primary">
+                <FileText className="h-5 w-5 text-primary-600" />
+                Curriculum Vitae
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {egresado?.cvUrl ? (
+                <PDFViewer 
+                  url={egresado.cvUrl} 
+                  title={`CV de ${egresado.nombres || 'Candidato'}`}
+                >
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between h-12 rounded-xl group border-2"
+                  >
+                    <span className="flex items-center gap-2 font-bold text-sm">
+                      <FileText className="h-5 w-5 text-text-muted group-hover:text-primary-600" />
+                      Curriculum Vitae.pdf
+                    </span>
+                    <Download className="h-4 w-4 text-text-muted" />
+                  </Button>
+                </PDFViewer>
+              ) : (
+                <div className="text-center py-6 text-text-muted">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No hay CV disponible</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Habilidades */}
+          {egresado?.habilidades && egresado.habilidades.length > 0 && (
+            <Card variant="elevated" className="border-none shadow-xl bg-surface/60 backdrop-blur-md rounded-3xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg font-bold text-text-primary">
+                  <Award className="h-5 w-5 text-primary-600" />
+                  Habilidades
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-wrap gap-2">
+                  {egresado.habilidades.map((h: any, i: number) => (
+                    <Badge key={i} variant="secondary" className="rounded-lg px-3 py-1">
+                      {h.nombre}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Resumen Profesional */}
+          {egresado?.resumenProfesional && (
+            <Card variant="elevated" className="border-none shadow-xl bg-surface/60 backdrop-blur-md rounded-3xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg font-bold text-text-primary">
+                  <Briefcase className="h-5 w-5 text-primary-600" />
+                  Resumen Profesional
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">
+                  {egresado.resumenProfesional}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Experiencia */}
+          {egresado?.experiencias && egresado.experiencias.length > 0 && (
+            <Card variant="elevated" className="border-none shadow-xl bg-surface/60 backdrop-blur-md rounded-3xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg font-bold text-text-primary">
+                  <TrendingUp className="h-5 w-5 text-primary-600" />
+                  Experiencia Laboral
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {egresado.experiencias.map((exp: any, i: number) => (
+                  <div key={i} className="border-l-2 border-primary-200 pl-4 py-2">
+                    <h4 className="font-bold text-text-primary">{exp.cargo}</h4>
+                    <p className="text-sm text-text-secondary">{exp.empresa}</p>
+                    <p className="text-xs text-text-muted mt-1">{exp.periodo}</p>
+                    {exp.descripcion && (
+                      <p className="text-sm text-text-secondary mt-2">{exp.descripcion}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Formación */}
+          {egresado?.formacion && egresado.formacion.length > 0 && (
+            <Card variant="elevated" className="border-none shadow-xl bg-surface/60 backdrop-blur-md rounded-3xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg font-bold text-text-primary">
+                  <GraduationCap className="h-5 w-5 text-primary-600" />
+                  Formación Académica
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-4">
+                {egresado.formacion.map((form: any, i: number) => (
+                  <div key={i} className="border-l-2 border-primary-200 pl-4 py-2">
+                    <h4 className="font-bold text-text-primary">{form.titulo}</h4>
+                    <p className="text-sm text-text-secondary">{form.institucion}</p>
+                    <p className="text-xs text-text-muted mt-1">{form.anio}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
