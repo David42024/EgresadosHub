@@ -59,6 +59,10 @@ services:
         value: "${CLOUDINARY_API_SECRET}"
         type: SECRET
         scope: RUN_TIME
+      # ─── Frontend URL para redirecciones OAuth ─────────────────────────────
+      - key: FRONTEND_URL
+        value: ${egresados-web.PUBLIC_URL}
+        scope: RUN_TIME
       # ─── OAuth Google (configure in Dashboard) ─────────────────────────────
       - key: GOOGLE_CLIENT_ID
         value: "${GOOGLE_CLIENT_ID}"
@@ -69,7 +73,7 @@ services:
         type: SECRET
         scope: RUN_TIME
       - key: GOOGLE_CALLBACK_URL
-        value: ${egresados-api.PUBLIC_URL}/api/auth/google/callback
+        value: ${egresados-api.PUBLIC_URL}/api/v1/auth/google/callback
         scope: RUN_TIME
       # ─── OAuth GitHub (configure in Dashboard) ─────────────────────────────
       - key: GITHUB_CLIENT_ID
@@ -81,7 +85,7 @@ services:
         type: SECRET
         scope: RUN_TIME
       - key: GITHUB_CALLBACK_URL
-        value: ${egresados-api.PUBLIC_URL}/api/auth/github/callback
+        value: ${egresados-api.PUBLIC_URL}/api/v1/auth/github/callback
         scope: RUN_TIME
 
   # Frontend Web (Next.js)
