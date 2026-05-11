@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import {
-  router, protectedProc, adminProc, egresadoProc,
+  router, publicProc, protectedProc, adminProc, egresadoProc,
 } from '../../trpc/trpc.service';
 import { EgresadosService } from './egresados.service';
 import {
@@ -34,6 +34,17 @@ export class EgresadosRouter {
       getById: protectedProc
         .input(z.object({ id: z.string().uuid() }))
         .query(({ input }) => this.service.findOne(input.id)),
+
+      // Endpoint público para perfil de egresado (sin autenticación)
+      getPublicProfile: publicProc
+        .input(z.object({ id: z.string().uuid() }))
+        .query(async ({ input }) => {
+          const profile = await this.service.findOnePublic(input.id);
+          if (!profile) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: 'Perfil no encontrado' });
+          }
+          return profile;
+        }),
 
       getMyProfile: egresadoProc
         .query(async ({ ctx }) => {

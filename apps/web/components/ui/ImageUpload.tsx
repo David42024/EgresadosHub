@@ -1,10 +1,12 @@
-// components/ui/ImageUpload.tsx
 'use client';
 import { useState, useRef } from 'react';
 import { Upload, X, Loader2, Link as LinkIcon, FileText, CheckCircle2, ExternalLink } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
 import { cn } from '@/lib/utils';
+import { generateReactHelpers } from '@uploadthing/react';
+import type { ClientUploadedFileData } from 'uploadthing/types';
+import type { OurFileRouter } from '@/app/api/uploadthing/core';
 
 interface ImageUploadProps {
   value?: string;
@@ -13,6 +15,14 @@ interface ImageUploadProps {
   label?: string;
   className?: string;
 }
+
+// Mapeo de folder a uploader de UploadThing
+type UploadThingEndpoint = keyof OurFileRouter;
+const FOLDER_TO_ENDPOINT: Record<ImageUploadProps['folder'], UploadThingEndpoint> = {
+  avatar: 'imageUploader',
+  cv: 'cvUploader',
+  logo: 'logoUploader',
+};
 
 // Configuración por tipo de upload
 const FOLDER_CONFIG = {
@@ -30,8 +40,8 @@ const FOLDER_CONFIG = {
   },
   cv: {
     accept: 'application/pdf',
-    maxSize: 5,
-    label: 'Solo PDF. Máx 5MB.',
+    maxSize: 4,
+    label: 'Solo PDF. Máx 4MB.',
     isDocument: true,
   },
 } as const;
@@ -39,7 +49,6 @@ const FOLDER_CONFIG = {
 export function ImageUpload({
   value, onChange, folder, label, className,
 }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [tempUrl, setTempUrl] = useState('');
@@ -47,10 +56,32 @@ export function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const config = FOLDER_CONFIG[folder];
+  const endpoint = FOLDER_TO_ENDPOINT[folder];
 
-  const handleUpload = async (file: File) => {
+  // Hook de UploadThing según el tipo
+  const { useUploadThing } = generateReactHelpers<OurFileRouter>();
+  const { startUpload, isUploading } = useUploadThing(endpoint, {
+    onClientUploadComplete: (res: ClientUploadedFileData<{ 
+      uploadedBy: string; 
+      url: string; 
+      type: string;
+    }>[]) => {
+      if (res && res[0]) {
+        onChange(res[0].url);
+        setLocalPreview(null);
+        setShowUrlInput(false);
+      }
+    },
+    onUploadError: (error: Error) => {
+      console.error('[UploadThing] Error:', error);
+      alert(`Error al subir: ${error.message}`);
+      setLocalPreview(null);
+    },
+  });
+
+  const handleFileSelect = async (file: File) => {
     setShowPreview(false);
-    
+
     // Generar previsualización local inmediata si es imagen
     if (!config.isDocument) {
       const reader = new FileReader();
@@ -75,57 +106,23 @@ export function ImageUpload({
       return;
     }
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
+    // Subir con UploadThing
     try {
-      const endpoint = folder === 'cv' ? 'cv' : folder === 'logo' ? 'logo' : 'avatar';
-      const res = await fetch(`/api/upload/${endpoint}`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!res.ok) throw new Error('Error al subir archivo');
-
-      const data = await res.json() as { url: string };
-      onChange(data.url);
+      await startUpload([file]);
+    } catch {
       setLocalPreview(null);
-      setShowUrlInput(false);
-    } catch (error) {
-      void error;
-      alert('Error al subir el archivo');
-      setLocalPreview(null);
-    } finally {
-      setUploading(false);
     }
   };
 
   const handleUrlSubmit = async () => {
     if (tempUrl.trim() === '') return;
     setShowPreview(false);
-    setUploading(true);
-    try {
-      const endpoint = folder === 'cv' ? 'cv' : folder === 'logo' ? 'logo' : 'avatar';
-      const res = await fetch(`/api/upload/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: tempUrl.trim() }),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Error al subir archivo');
-
-      const data = await res.json() as { url: string };
-      onChange(data.url);
-      setLocalPreview(null); // Limpiar preview local una vez subido con éxito
-      setShowUrlInput(false);
-    } catch (error) {
-      void error;
-      alert('Error al procesar la URL');
-    } finally {
-      setUploading(false);
-    }
+    
+    // Para URLs, simplemente guardamos la URL directamente
+    // (UploadThing no soporta upload desde URL en el middleware actual)
+    onChange(tempUrl.trim());
+    setTempUrl('');
+    setShowUrlInput(false);
   };
 
   // ─── Vista para IMÁGENES (avatar, logo) ───────────────────────────────────
@@ -144,20 +141,20 @@ export function ImageUpload({
             size="sm"
             className="h-9 gap-2"
             onClick={() => inputRef.current?.click()}
-            disabled={uploading}
+            disabled={isUploading}
           >
             {(localPreview || (value !== '' && value !== undefined)) && !config.isDocument && (
               <div className="h-6 w-6 rounded-md overflow-hidden border border-border shadow-sm">
                 <img src={localPreview || value} alt="Preview" className="h-full w-full object-cover" />
               </div>
             )}
-            {uploading
+            {isUploading
               ? <Loader2 className="h-4 w-4 animate-spin" />
               : <Upload className="h-4 w-4" />
             }
-            {uploading ? 'Subiendo...' : value !== '' && value !== undefined ? 'Cambiar foto' : 'Subir foto'}
+            {isUploading ? 'Subiendo...' : value !== '' && value !== undefined ? 'Cambiar foto' : 'Subir foto'}
           </Button>
-          {(localPreview || (value !== '' && value !== undefined)) && !uploading && (
+          {(localPreview || (value !== '' && value !== undefined)) && !isUploading && (
             <button
               type="button"
               onClick={() => {
@@ -176,7 +173,7 @@ export function ImageUpload({
                size="sm"
                className="h-9 gap-2"
                onClick={() => setShowUrlInput(true)}
-               disabled={uploading}
+               disabled={isUploading}
              >
                <LinkIcon className="h-4 w-4" />
                URL
@@ -210,7 +207,7 @@ export function ImageUpload({
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file !== undefined) void handleUpload(file);
+            if (file !== undefined) void handleFileSelect(file);
           }}
         />
       </div>
@@ -227,7 +224,7 @@ export function ImageUpload({
       )}
 
       {/* Estado: subido */}
-      {value !== '' && value !== undefined && !uploading && (
+      {value !== '' && value !== undefined && !isUploading && (
         <div className="space-y-3">
           {/* Indicador de subido */}
           <div className="flex items-center justify-between p-3 rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
@@ -309,7 +306,7 @@ export function ImageUpload({
       )}
 
       {/* Estado: subiendo */}
-      {uploading && (
+      {isUploading && (
         <div className="flex items-center gap-2 p-3 rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-900/20">
           <Loader2 className="h-4 w-4 text-blue-600 animate-spin shrink-0" />
           <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
@@ -319,7 +316,7 @@ export function ImageUpload({
       )}
 
       {/* Botón de subida */}
-      {!uploading && (
+      {!isUploading && (
         <Button
           type="button"
           variant="outline"
@@ -341,7 +338,7 @@ export function ImageUpload({
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file !== undefined) void handleUpload(file);
+          if (file !== undefined) void handleFileSelect(file);
         }}
       />
     </div>

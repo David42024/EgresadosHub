@@ -10,6 +10,24 @@ import {
   EgresadoFilter,
 } from '@repo/trpc-contract';
 
+// Tipo para perfil público de egresado (sin datos sensibles)
+export interface EgresadoPublicProfile {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  nombreCompleto: string;
+  carrera: string;
+  anioEgreso: number;
+  resumenProfesional: string | null;
+  fotoUrl: string | null;
+  cvUrl: string | null;
+  habilidades: Array<{ nombre: string; nivel?: number; categoria?: string }>;
+  experiencias: Array<any>;
+  formacion: Array<any>;
+  redesSociales: { linkedin?: string; github?: string; portfolio?: string };
+  ubicacion: string | null;
+}
+
 @Injectable()
 export class EgresadosService {
   constructor(
@@ -73,6 +91,50 @@ export class EgresadosService {
     const e = await this.repo.findOne({ where: { id }, relations: ['user'] });
     if (!e) throw new NotFoundException('Egresado no encontrado');
     return e;
+  }
+
+  // ─── PERFIL PÚBLICO ──────────────────────────────────────────────────────────
+  
+  async findOnePublic(id: string): Promise<EgresadoPublicProfile | null> {
+    const e = await this.repo.findOne({ 
+      where: { id }, 
+      relations: ['user'],
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        carrera: true,
+        anioEgreso: true,
+        resumenProfesional: true,
+        fotoUrl: true,
+        cvUrl: true,
+        habilidades: true,
+        experiencias: true,
+        formacion: true,
+        redesSociales: true,
+        ubicacion: true,
+      }
+    });
+    
+    if (!e || !e.user?.isActive) return null;
+
+    // Transformar a DTO público (omitir datos sensibles)
+    return {
+      id: e.id,
+      nombres: e.nombres,
+      apellidos: e.apellidos,
+      nombreCompleto: `${e.nombres} ${e.apellidos}`,
+      carrera: e.carrera,
+      anioEgreso: e.anioEgreso,
+      resumenProfesional: e.resumenProfesional,
+      fotoUrl: e.fotoUrl,
+      cvUrl: e.cvUrl,
+      habilidades: e.habilidades || [],
+      experiencias: e.experiencias || [],
+      formacion: e.formacion || [],
+      redesSociales: e.redesSociales || {},
+      ubicacion: e.ubicacion,
+    };
   }
 
   async findByUserId(userId: string): Promise<Egresado> {

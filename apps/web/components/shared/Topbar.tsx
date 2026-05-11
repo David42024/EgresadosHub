@@ -1,10 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/lib/trpc/client';
 import { Button } from '@/components/ui/button';
-import { Bell, LogOut, User, Search, Settings } from 'lucide-react';
+import { LogOut, User, Search, Settings } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { NotificacionesBell } from './NotificacionesBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,10 +24,9 @@ interface TopbarProps {
 
 export function Topbar({ user }: TopbarProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const { data: noLeidasData } = (trpc as any).notificaciones.countNoLeidas.useQuery(undefined, {
-    refetchInterval: 30_000,
-  }) as any;
+  // Notificaciones ya se manejan en NotificacionesBell component
 
   const { data: egresadoProfile } = (trpc as any).egresados.getMyProfile.useQuery(undefined, {
     enabled: user.role === 'EGRESADO',
@@ -37,12 +38,19 @@ export function Topbar({ user }: TopbarProps) {
     retry: false,
   }) as any;
 
-  const noLeidas = typeof noLeidasData === 'number' ? noLeidasData : 0;
 
   const logoutMutation = (trpc as any).auth.logout.useMutation({
     onSuccess: () => {
+      // FIX 4: Limpiar TODO el caché de React Query al hacer logout
+      queryClient.clear();
+      queryClient.removeQueries();
+      
+      // Limpiar localStorage
       localStorage.removeItem('access_token');
-      router.push('/auth/login');
+      
+      // FIX 4: Usar router.replace en lugar de push + refresh para limpiar caché de Next.js
+      router.replace('/auth/login');
+      router.refresh();
     },
   }) as any;
 
@@ -103,13 +111,8 @@ export function Topbar({ user }: TopbarProps) {
       <div className="flex items-center gap-2">
         <ThemeToggle />
 
-        {/* Notificaciones */}
-        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-lg text-text-secondary hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20">
-          <Bell className="h-5 w-5" />
-          {noLeidas > 0 && (
-            <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-error border-2 border-surface animate-pulse"/>
-          )}
-        </Button>
+        {/* Notificaciones - Componente funcional */}
+        <NotificacionesBell userId={user.id || ''} />
 
         <div className="w-px h-6 bg-border mx-2" />
 
