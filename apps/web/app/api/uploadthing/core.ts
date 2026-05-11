@@ -1,5 +1,4 @@
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
-import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 
 const f = createUploadthing();
@@ -16,14 +15,29 @@ interface UserPayload {
   role: 'EGRESADO' | 'EMPRESA' | 'ADMINISTRADOR';
 }
 
-// Función de autenticación real con JWT
+// Función para extraer token de cookie string
+function extractTokenFromCookie(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  
+  const cookies = cookieHeader.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'access_token') {
+      return value;
+    }
+  }
+  return null;
+}
+
+// Función de autenticación real con JWT - usando headers directamente
 async function auth(req: Request): Promise<UserPayload | null> {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('access_token')?.value;
+    // Obtener cookie header directamente del request
+    const cookieHeader = req.headers.get('cookie');
+    const token = extractTokenFromCookie(cookieHeader);
     
     if (!token) {
-      console.log('[UploadThing Auth] No token found in cookies');
+      console.log('[UploadThing Auth] No access_token found in cookies');
       return null;
     }
 

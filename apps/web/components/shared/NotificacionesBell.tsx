@@ -78,9 +78,19 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
   };
 
   // Formatear tiempo relativo
-  const formatTimeAgo = (date: string) => {
+  const formatTimeAgo = (date: string | Date | null | undefined) => {
+    if (!date) return 'Fecha desconocida';
+    
     const now = new Date();
-    const past = new Date(date);
+    let past: Date;
+    
+    try {
+      past = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(past.getTime())) return 'Fecha inválida';
+    } catch {
+      return 'Fecha inválida';
+    }
+    
     const diffMs = now.getTime() - past.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
@@ -124,9 +134,9 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
         </Button>
       </PopoverTrigger>
       
-      <PopoverContent className="w-80 md:w-96 p-0" align="end">
+      <PopoverContent className="w-80 md:w-96 p-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 shadow-xl" align="end">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-t-lg">
           <h3 className="font-semibold text-sm">Notificaciones</h3>
           {noLeidasCount > 0 && (
             <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
@@ -161,7 +171,7 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
             </div>
           ) : (
             // Lista de notificaciones
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-gray-200 dark:divide-slate-700 bg-white dark:bg-slate-900">
               {notificaciones.map((notif: any) => {
                 const tipoConfig = TIPO_ICONO[notif.tipo] || TIPO_ICONO.SISTEMA;
                 const IconComponent = tipoConfig.icon;
@@ -171,8 +181,8 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
                     key={notif.id}
                     onClick={() => handleNotificacionClick(notif)}
                     className={cn(
-                      "w-full text-left p-3 flex gap-3 hover:bg-muted/50 transition-colors",
-                      !notif.leida && "bg-primary/5"
+                      "w-full text-left p-3 flex gap-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors bg-white dark:bg-slate-900",
+                      !notif.leida && "bg-blue-50/50 dark:bg-blue-900/20"
                     )}
                   >
                     {/* Icono */}
@@ -210,7 +220,7 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
 
         {/* Footer - Marcar todas como leídas */}
         {notificaciones.length > 0 && (
-          <div className="p-2 border-t border-border bg-muted/30">
+          <div className="p-2 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 rounded-b-lg">
             <Button
               variant="ghost"
               size="sm"
