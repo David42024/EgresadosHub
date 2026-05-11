@@ -35,6 +35,7 @@ import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFo
 import { toast } from '@/components/ui/use-toast';
 import Link from 'next/link';
 import type { RouterOutputs } from '@/lib/trpc/router.types';
+import { PDFViewer } from '@/components/ui/pdf-viewer';
 
 type Postulacion = RouterOutputs['postulaciones']['postulantesDeOferta']['data'][number];
 
@@ -342,19 +343,21 @@ export default function EmpresaPostulantesPage() {
                     <FileText className="h-4 w-4 text-blue-500" /> Documentación
                   </h4>
                   {selectedPostulacion.egresado?.cvUrl ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-between h-12 rounded-2xl group border-2 border-border/50 hover:border-primary-500/30 bg-bg-base/30"
-                      asChild
+                    <PDFViewer 
+                      url={selectedPostulacion.egresado.cvUrl} 
+                      title={`CV de ${selectedPostulacion.egresado?.nombres || 'Candidato'}`}
                     >
-                      <a href={selectedPostulacion.egresado.cvUrl} target="_blank" rel="noopener noreferrer" download>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-between h-12 rounded-2xl group border-2 border-border/50 hover:border-primary-500/30 bg-bg-base/30"
+                      >
                         <span className="flex items-center gap-2 font-bold text-sm">
                           <FileText className="h-5 w-5 text-text-muted group-hover:text-primary-600" />
                           Perfil CV Base
                         </span>
                         <Download className="h-4 w-4 text-text-muted" />
-                      </a>
-                    </Button>
+                      </Button>
+                    </PDFViewer>
                   ) : (
                     <Button 
                       variant="outline" 
@@ -372,20 +375,18 @@ export default function EmpresaPostulantesPage() {
                     <div className="mt-4 space-y-2">
                       <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">Archivos de esta Postulación:</p>
                       {selectedPostulacion.documentos.map((doc: any, i: number) => (
-                        <Button 
-                          key={i}
-                          variant="secondary" 
-                          className="w-full justify-between h-12 rounded-2xl group border border-border/50 bg-bg-base/50"
-                          asChild
-                        >
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer" download>
+                        <PDFViewer key={i} url={doc.url} title={doc.nombre}>
+                          <Button 
+                            variant="secondary" 
+                            className="w-full justify-between h-12 rounded-2xl group border border-border/50 bg-bg-base/50"
+                          >
                             <span className="flex items-center gap-2 font-bold text-sm truncate max-w-[200px]">
                               <FileText className="h-4 w-4 text-blue-500" />
                               {doc.nombre}
                             </span>
                             <ExternalLink className="h-4 w-4 text-text-muted group-hover:text-primary-600" />
-                          </a>
-                        </Button>
+                          </Button>
+                        </PDFViewer>
                       ))}
                     </div>
                   )}
