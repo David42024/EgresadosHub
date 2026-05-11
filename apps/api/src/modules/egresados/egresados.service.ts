@@ -31,14 +31,16 @@ export interface EgresadoPublicProfile {
 
 @Injectable()
 export class EgresadosService {
-  private readonly apiInternalUrl: string;
+  private readonly apiPublicUrl: string;
 
   constructor(
     @InjectRepository(Egresado)
     private readonly repo: Repository<Egresado>,
     private readonly config: ConfigService,
   ) {
-    this.apiInternalUrl = this.config.get<string>('API_INTERNAL_URL') || 'http://localhost:3001';
+    this.apiPublicUrl = this.config.get<string>('API_PUBLIC_URL') || 
+                        this.config.get<string>('API_INTERNAL_URL') || 
+                        'http://localhost:3001';
   }
 
   // Transformar URL de Cloudinary a URL local
@@ -55,7 +57,7 @@ export class EgresadosService {
     const match = cvUrl.match(/([a-f0-9-]{36})\.pdf$/i);
     if (match) {
       const userId = match[1];
-      return `${this.apiInternalUrl}/v1777703567/curriculums/${userId}.pdf`;
+      return `${this.apiPublicUrl}/v1777703567/curriculums/${userId}.pdf`;
     }
     
     return cvUrl;

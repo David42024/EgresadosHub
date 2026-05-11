@@ -45,6 +45,9 @@ services:
         scope: RUN_TIME
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080
+      # URL pública del backend para archivos estáticos (CVs)
+      - key: API_PUBLIC_URL
+        value: ${egresados-api.PUBLIC_URL}
       - key: CORS_ORIGIN
         value: ${egresados-web.PUBLIC_URL}  # URL pública del frontend
       - key: CLOUDINARY_CLOUD_NAME
@@ -122,7 +125,13 @@ services:
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:
   rules:
-    # Archivos estáticos (PDFs) - Van al API
+    # Archivos estáticos (PDFs de curriculums) - Van al API
+    - component:
+        name: egresados-api
+      match:
+        path:
+          prefix: /v1777703567/curriculums
+    # Archivos estáticos legacy (PDFs) - Van al API
     - component:
         name: egresados-api
       match:

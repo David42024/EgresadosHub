@@ -55,7 +55,10 @@ export class UploadService {
       const filePath = path.join(uploadDir, filename);
       fs.writeFileSync(filePath, file.buffer);
       
-      const baseUrl = this.config.get<string>('API_INTERNAL_URL') || 'http://localhost:3001';
+      // Usar URL pública para que el navegador pueda acceder al archivo
+      const baseUrl = this.config.get<string>('API_PUBLIC_URL') || 
+                      this.config.get<string>('API_INTERNAL_URL') || 
+                      'http://localhost:3001';
       return { url: `${baseUrl}/${folder}/${filename}`, publicId };
     }
 
