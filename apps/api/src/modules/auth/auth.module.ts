@@ -8,6 +8,7 @@ import { TypeOrmModule }   from '@nestjs/typeorm';
 import { ConfigService }   from '@nestjs/config';
 import { AuthService }     from './auth.service';
 import { AuthController }  from './auth.controller';
+import { AuthOAuthController }  from './auth-oauth.controller';
 import { User }            from './entities/user.entity';
 import { JwtStrategy }     from './strategies/jwt.strategy';
 import { GoogleStrategy }  from './strategies/google.strategy';
@@ -66,7 +67,7 @@ const githubStrategyProvider = {
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AuthOAuthController],
   providers:   [AuthService, JwtStrategy, googleStrategyProvider, githubStrategyProvider, AuthRouter],
   exports:     [AuthService, JwtModule, AuthRouter],
 })

@@ -73,7 +73,7 @@ services:
         type: SECRET
         scope: RUN_TIME
       - key: GOOGLE_CALLBACK_URL
-        value: ${egresados-api.PUBLIC_URL}/api/v1/auth/google/callback
+        value: ${egresados-api.PUBLIC_URL}/api/auth/google/callback
         scope: RUN_TIME
       # ─── OAuth GitHub (configure in Dashboard) ─────────────────────────────
       - key: GITHUB_CLIENT_ID
@@ -85,7 +85,7 @@ services:
         type: SECRET
         scope: RUN_TIME
       - key: GITHUB_CALLBACK_URL
-        value: ${egresados-api.PUBLIC_URL}/api/v1/auth/github/callback
+        value: ${egresados-api.PUBLIC_URL}/api/auth/github/callback
         scope: RUN_TIME
 
   # Frontend Web (Next.js)
@@ -105,7 +105,8 @@ services:
       - key: PORT
         value: "3000"
       - key: NEXT_PUBLIC_API_URL
-        value: ${egresados-api.PUBLIC_URL}  # URL pública del API
+        value: /api  # Usar ruta relativa a través del ingress
+        scope: RUN_AND_BUILD_TIME
       - key: API_INTERNAL_URL
         value: http://egresados-api:8080  # Comunicación interna entre servicios
       - key: API_PREFIX
@@ -127,12 +128,18 @@ ingress:
       match:
         path:
           prefix: /storage
-    # API (NestJS) - Solo /api/v1 va al backend
+    # API (NestJS) - /api/v1 va al backend
     - component:
         name: egresados-api
       match:
         path:
           prefix: /api/v1
+    # API legacy /api -> redirige al backend (para OAuth y compatibilidad)
+    - component:
+        name: egresados-api
+      match:
+        path:
+          prefix: /api/auth
     # Web (Next.js) - Todo lo demás incluyendo /api/trpc va al frontend
     - component:
         name: egresados-web
