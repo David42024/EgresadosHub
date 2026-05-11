@@ -110,6 +110,9 @@ services:
         value: "${UPLOADTHING_TOKEN}"
         type: SECRET
         scope: RUN_AND_BUILD_TIME
+      - key: JWT_SECRET
+        value: "${JWT_SECRET}"
+        scope: RUN_TIME
 
 # ─── Ingress (Enrutamiento de tráfico) ───────────────────────────────────────
 ingress:
