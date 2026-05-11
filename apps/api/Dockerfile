@@ -46,7 +46,7 @@ RUN apk add --no-cache \
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@9 typeorm
 WORKDIR /app
 
 # Copy package files
@@ -60,17 +60,12 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 # Copy built files
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages ./packages
-# Copy start script and source files needed for migrations
-COPY --from=builder /app/apps/api/src ./apps/api/src
-COPY --from=builder /app/apps/api/tsconfig.json ./apps/api/
-COPY --from=builder /app/apps/api/start.sh ./apps/api/
+# Copy start script
+COPY --from=builder /app/apps/api/start.js ./apps/api/
 
 WORKDIR /app/apps/api
-
-# Make start script executable
-RUN chmod +x start.sh
 
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["./start.sh"]
+CMD ["node", "start.js"]
