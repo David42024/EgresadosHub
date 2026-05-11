@@ -77,21 +77,43 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
     }
   };
 
-  // Formatear tiempo relativo
-  const formatTimeAgo = (date: string | Date | null | undefined) => {
+  // Formatear tiempo relativo - soporta ISO strings, timestamps y Date objects
+  const formatTimeAgo = (date: string | Date | number | null | undefined) => {
     if (!date) return 'Fecha desconocida';
     
     const now = new Date();
     let past: Date;
     
     try {
-      past = typeof date === 'string' ? new Date(date) : date;
+      // Intentar parsear como timestamp numérico primero
+      if (typeof date === 'number') {
+        past = new Date(date);
+      } else if (typeof date === 'string') {
+        // Limpiar la string y parsear
+        const cleanDate = date.trim();
+        past = new Date(cleanDate);
+        
+        // Si es inválido, intentar como timestamp
+        if (isNaN(past.getTime()) && /^\d+$/.test(cleanDate)) {
+          past = new Date(parseInt(cleanDate, 10));
+        }
+      } else {
+        past = date;
+      }
+      
       if (isNaN(past.getTime())) return 'Fecha inválida';
-    } catch {
+    } catch (e) {
+      console.error('Error parseando fecha:', date, e);
       return 'Fecha inválida';
     }
     
     const diffMs = now.getTime() - past.getTime();
+    
+    // Si la fecha es futura, mostrar fecha completa
+    if (diffMs < 0) {
+      return past.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+    
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -101,7 +123,7 @@ export function NotificacionesBell({ userId }: NotificacionesBellProps) {
     if (diffHours < 24) return `Hace ${diffHours} h`;
     if (diffDays === 1) return 'Ayer';
     if (diffDays < 7) return `Hace ${diffDays} días`;
-    return past.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    return past.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   };
 
   // Manejar click en una notificación

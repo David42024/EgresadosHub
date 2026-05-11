@@ -132,6 +132,7 @@ export class PostulacionesService {
       .leftJoinAndSelect('p.egresado', 'eg')
       .leftJoinAndSelect('eg.user', 'u')
       .leftJoinAndSelect('p.oferta', 'o')
+      .addSelect(['eg.cvUrl']) // Asegurar que cvUrl se cargue
       .where('p.ofertaId = :ofertaId', { ofertaId })
       .orderBy('p.postuladoAt', 'DESC')
       .take(limit + 1);
@@ -141,6 +142,14 @@ export class PostulacionesService {
 
     const total = await qb.getCount();
     const rows = await qb.getMany();
+    
+    // Debug: verificar que cvUrl se cargó
+    rows.forEach((row, idx) => {
+      if (row.egresado) {
+        console.log(`[findByOferta] Postulación ${idx} - cvUrl:`, row.egresado.cvUrl);
+      }
+    });
+    
     const hasNext = rows.length > limit;
     return { data: hasNext ? rows.slice(0, limit) : rows, nextCursor: hasNext ? rows[limit - 1].id : null, total };
   }
