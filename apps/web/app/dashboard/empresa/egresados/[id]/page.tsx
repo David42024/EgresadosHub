@@ -42,9 +42,9 @@ export default function EgresadoPerfilEmpresaPage() {
   }) as any;
   
   // Función para refrescar datos
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: [['egresados', 'getById']] });
-    refetch();
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: [['egresados', 'getById']] });
+    await refetch();
   };
 
   if (isLoading) {
