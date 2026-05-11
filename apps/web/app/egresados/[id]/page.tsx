@@ -20,14 +20,15 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Generar metadata dinámica para SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
+    const { id } = await params;
     const api = await createServerTrpcClient();
-    const profile = await api.egresados.getPublicProfile.query({ id: params.id });
+    const profile = await api.egresados.getPublicProfile.query({ id });
     
     if (!profile) {
       return {
@@ -57,8 +58,9 @@ export default async function EgresadoPublicProfilePage({ params }: Props) {
   let profile;
   
   try {
+    const { id } = await params;
     const api = await createServerTrpcClient();
-    profile = await api.egresados.getPublicProfile.query({ id: params.id });
+    profile = await api.egresados.getPublicProfile.query({ id });
   } catch {
     notFound();
   }
